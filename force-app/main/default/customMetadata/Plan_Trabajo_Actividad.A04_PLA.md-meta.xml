@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Envío de insumos por el cliente</label>
+    <protected>false</protected>
+    <values>
+        <field>Etapa__c</field>
+        <value xsi:type="xsd:string">Planeación</value>
+    </values>
+    <values>
+        <field>Actividad__c</field>
+        <value xsi:type="xsd:string">Envío de insumos por el cliente</value>
+    </values>
+    <values>
+        <field>Aplica_A__c</field>
+        <value xsi:type="xsd:string">Ambos</value>
+    </values>
+    <values>
+        <field>Soluciones__c</field>
+        <value xsi:type="xsd:string">Todas</value>
+    </values>
+    <values>
+        <field>Campos_Inicio__c</field>
+        <value xsi:type="xsd:string">Fecha_Solicitud_Insumos__c</value>
+    </values>
+    <values>
+        <field>Campo_Duracion__c</field>
+        <value xsi:type="xsd:string">Duraci_n_Etapa_Insumos_y_Configuraci_n__c</value>
+    </values>
+    <values>
+        <field>Campos_Fin__c</field>
+        <value xsi:type="xsd:string">Fecha_Recibo_Insumos__c,Fecha_Acordada_Recepcion_Insumos__c</value>
+    </values>
+    <values>
+        <field>Tipo_Estatus__c</field>
+        <value xsi:type="xsd:string">SeCompleto</value>
+    </values>
+    <values>
+        <field>Campo_Estatus__c</field>
+        <value xsi:type="xsd:string">Insumos_Completos__c</value>
+    </values>
+    <values>
+        <field>Campos_Comentarios__c</field>
+        <value xsi:type="xsd:string">Comentarios_Recepcion_Insumos_Config__c,Lista_de_Insumos_Recibidos__c</value>
+    </values>
+    <values>
+        <field>Asignado__c</field>
+        <value xsi:type="xsd:string">Cliente</value>
+    </values>
+    <values>
+        <field>Nota__c</field>
+        <value xsi:type="xsd:string">Fin: fecha real de recibo; si está vacía, la acordada.</value>
+    </values>
+    <values>
+        <field>Orden__c</field>
+        <value xsi:type="xsd:double">4</value>
+    </values>
+</CustomMetadata>

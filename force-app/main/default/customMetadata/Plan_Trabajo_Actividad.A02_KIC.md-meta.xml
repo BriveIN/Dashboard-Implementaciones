@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Envío y aprobación del plan de trabajo</label>
+    <protected>false</protected>
+    <values>
+        <field>Etapa__c</field>
+        <value xsi:type="xsd:string">Kickoff</value>
+    </values>
+    <values>
+        <field>Actividad__c</field>
+        <value xsi:type="xsd:string">Envío y aprobación del plan de trabajo</value>
+    </values>
+    <values>
+        <field>Aplica_A__c</field>
+        <value xsi:type="xsd:string">Ambos</value>
+    </values>
+    <values>
+        <field>Soluciones__c</field>
+        <value xsi:type="xsd:string">Todas</value>
+    </values>
+    <values>
+        <field>Tipo_Estatus__c</field>
+        <value xsi:type="xsd:string">SeCompleto</value>
+    </values>
+    <values>
+        <field>Campo_Estatus__c</field>
+        <value xsi:type="xsd:string">Plan_de_Trabajo_Aprobado__c</value>
+    </values>
+    <values>
+        <field>Campos_Comentarios__c</field>
+        <value xsi:type="xsd:string">Evidencia_Plan_de_Trabajo__c</value>
+    </values>
+    <values>
+        <field>Prefijo_Comentario__c</field>
+        <value xsi:type="xsd:string">Evidencia: </value>
+    </values>
+    <values>
+        <field>Asignado__c</field>
+        <value xsi:type="xsd:string">Brivé + Cliente</value>
+    </values>
+    <values>
+        <field>Nota__c</field>
+        <value xsi:type="xsd:string">Sin fecha propia en Salesforce: sale Por definir.</value>
+    </values>
+    <values>
+        <field>Orden__c</field>
+        <value xsi:type="xsd:double">2</value>
+    </values>
+</CustomMetadata>

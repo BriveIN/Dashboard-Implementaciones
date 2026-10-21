@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel de implementaciones · prototipo local</title>
+    <style>
+        body { margin: 0; background: #f3f3f3; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #181818; }
+        .barra_local { background: #032d60; color: #fff; padding: 0.5rem 1rem; font-size: 0.8125rem; }
+        .barra_local strong { font-weight: 700; }
+        #aviso { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #032d60; color: #fff; padding: 0.75rem 1.25rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 0.8125rem; }
+    </style>
+</head>
+<body>
+    <div class="barra_local"><strong>Prototipo local</strong> · datos de prueba ficticios, no conectados a Salesforce</div>
+    <div id="app"></div>
+    <div id="aviso" role="status" hidden></div>
+    <script type="module" src="./dist/main.js"></script>
+</body>
+</html>

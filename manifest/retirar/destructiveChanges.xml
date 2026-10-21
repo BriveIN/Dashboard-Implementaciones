@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Retira por completo el panel de implementaciones. Antes, quitar la asignación del permiso (ver README). -->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Panel_Implementaciones</members>
+        <name>PermissionSet</name>
+    </types>
+    <types>
+        <members>Panel_de_Implementaciones</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>Panel_de_Implementaciones</members>
+        <name>FlexiPage</name>
+    </types>
+    <types>
+        <members>implementacionesPanel</members>
+        <members>implementacionesDetalle</members>
+        <members>implementacionesLista</members>
+        <members>implementacionesBarras</members>
+        <members>implementacionesUtil</members>
+        <name>LightningComponentBundle</name>
+    </types>
+    <types>
+        <members>ImplementacionesPanelController</members>
+        <members>ImplementacionesPanelControllerTest</members>
+        <name>ApexClass</name>
+    </types>
+    <version>67.0</version>
+</Package>

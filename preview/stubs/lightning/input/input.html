@@ -1,0 +1,6 @@
+<template>
+    <label class="campo">
+        <span class="etiqueta" lwc:if={label} hidden={ocultarEtiqueta}>{label}</span>
+        <input class="control" type={type} value={value} placeholder={placeholder} min={min} aria-label={label} oninput={escribir} />
+    </label>
+</template>

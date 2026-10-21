@@ -1,0 +1,86 @@
+.descarga { position: relative; }
+
+.boton_secundario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 1.125rem;
+    border: 1px solid #a9a9a9;
+    border-radius: 0.5rem;
+    background: #fff;
+    font: inherit;
+    font-size: 0.9375rem;
+    color: var(--tinta, #18303e);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+.boton_secundario:hover:not(:disabled) { background: #f4f4f4; border-color: #7c7c7c; }
+.boton_secundario:focus-visible, .opcion:focus-visible { outline: 2px solid var(--foco, #08718d); outline-offset: 2px; }
+.boton_secundario:disabled { opacity: 0.6; cursor: progress; }
+
+.flecha {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-right: 2px solid currentcolor;
+    border-bottom: 2px solid currentcolor;
+    transform: translateY(-2px) rotate(45deg);
+}
+
+.menu {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    right: 0;
+    z-index: 20;
+    display: grid;
+    min-width: 17rem;
+    padding: 0.375rem;
+    background: var(--panel, #fff);
+    border: 1px solid var(--linea, #d8e1e6);
+    border-radius: 0.5rem;
+    box-shadow: 0 6px 18px rgb(22 45 58 / 14%);
+}
+.opcion {
+    display: grid;
+    gap: 0.125rem;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: 0.375rem;
+    background: transparent;
+    font: inherit;
+    font-size: 0.9375rem;
+    color: var(--tinta, #18303e);
+    text-align: left;
+    cursor: pointer;
+}
+.opcion:hover { background: var(--accion-fondo, #e8f2f5); }
+.detalle { font-size: 0.8125rem; color: var(--tenue, #536775); }
+.nota { margin: 0.25rem 0.75rem 0.375rem; padding-top: 0.5rem; border-top: 1px solid var(--linea, #d8e1e6); font-size: 0.8125rem; color: var(--tenue, #536775); }
+
+/* aviso temporal: recuadro bajo el botón; se quita solo o al hacer clic */
+.aviso {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 30;
+    width: max-content;
+    max-width: 22rem;
+    margin: 0;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid;
+    border-radius: 0.5rem;
+    box-shadow: 0 6px 18px rgb(22 45 58 / 14%);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    cursor: pointer;
+    animation: aviso_entrada 160ms ease-out;
+}
+.aviso_ok { background: #eaf5ed; border-color: #47815e; color: #17613b; }
+.aviso_error { background: #fcedeb; border-color: #a5221c; color: #a5221c; }
+@keyframes aviso_entrada { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .aviso { animation: none; } }
+
+@media (max-width: 48rem) {
+    .boton_secundario { padding: 0.375rem 0.75rem; font-size: 0.8125rem; min-height: 2.5rem; }
+}

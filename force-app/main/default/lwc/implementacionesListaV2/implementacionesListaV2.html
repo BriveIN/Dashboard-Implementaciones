@@ -1,0 +1,38 @@
+<template>
+    <section class="drill" aria-label={titulo}>
+        <div class="drill_cabecera">
+            <div>
+                <h3 class="drill_titulo">{titulo}</h3>
+                <p class="nota">{subtitulo}. Toca un registro para ver su detalle aquí mismo.</p>
+            </div>
+            <lightning-button-icon icon-name="utility:close" alternative-text="Cerrar" title="Cerrar"
+                onclick={cerrar}></lightning-button-icon>
+        </div>
+        <template lwc:if={vacio}>
+            <p class="vacio">No hay registros con este filtro.</p>
+        </template>
+        <ul class="filas">
+            <template for:each={filas} for:item="f">
+                <li key={f.id} class={f.claseFila}>
+                    <button class="fila_boton" aria-expanded={f.ariaAbierta} data-id={f.id} onclick={alternar}>
+                        <lightning-icon class="plegar" icon-name={f.icono} size="xx-small"></lightning-icon>
+                        <span class="fila_nombre">{f.nombre}</span>
+                        <span class={f.claseEtapa}>{f.etapa}</span>
+                        <span class="fila_meta">{f.empresa} · {f.tipo}</span>
+                        <span class={f.claseHoras}>{f.horas} · {f.estadoHoras}</span>
+                        <span class="fila_meta">{f.actividades}<template lwc:if={f.cambios}> · {f.cambios}</template></span>
+                    </button>
+                    <template lwc:if={f.abierta}>
+                        <div class="fila_detalle">
+                            <c-implementaciones-detalle-v2 registro={f.registro} data-id={f.id} onabrir={abrir}
+                                oncerrar={cerrarFila}></c-implementaciones-detalle-v2>
+                        </div>
+                    </template>
+                </li>
+            </template>
+        </ul>
+        <template lwc:if={hayMas}>
+            <div class="mas"><lightning-button label={textoMas} onclick={mostrarMas}></lightning-button></div>
+        </template>
+    </section>
+</template>

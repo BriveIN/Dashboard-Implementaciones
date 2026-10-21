@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Campo_Duracion__c</fullName>
+    <description>API name del campo "Duración X" (la unidad se indica en Unidad_Duracion__c).</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Campo de duración</label>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

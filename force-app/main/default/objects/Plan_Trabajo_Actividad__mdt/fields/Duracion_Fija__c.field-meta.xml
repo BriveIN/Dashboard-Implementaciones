@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Duracion_Fija__c</fullName>
+    <description>Días hábiles cuando la actividad no tiene campo de duración (por ejemplo una sesión = 1).</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Duración fija (días)</label>
+    <precision>3</precision>
+    <scale>0</scale>
+    <required>false</required>
+    <type>Number</type>
+</CustomField>

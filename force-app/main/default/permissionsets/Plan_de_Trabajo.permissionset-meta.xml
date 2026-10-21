@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses>
+        <apexClass>PlanTrabajoController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <description>Plan de trabajo descargable desde el panel de implementaciones. Da acceso a la clase que arma el plan (solo lectura); los datos respetan el acceso de cada usuario.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Plan de trabajo</label>
+</PermissionSet>

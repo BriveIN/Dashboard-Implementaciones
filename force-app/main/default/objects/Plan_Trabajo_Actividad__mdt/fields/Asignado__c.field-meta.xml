@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Asignado__c</fullName>
+    <description>Brivé, Cliente o Brivé + Cliente.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Asignado a</label>
+    <length>20</length>
+    <required>true</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,25 @@
+<template>
+    <div class="descarga" onclick={marcarInterno} onkeydown={teclaMenu}>
+        <button class="boton_secundario" type="button" aria-haspopup="menu" aria-expanded={ariaMenu} aria-busy={ariaOcupado}
+            disabled={ocupado} onclick={alternarMenu}>
+            {textoBoton}
+            <span class="flecha" aria-hidden="true"></span>
+        </button>
+        <template lwc:if={menuAbierto}>
+            <div class="menu" role="menu" aria-label="Descargar reportes">
+                <button class="opcion" type="button" role="menuitem" data-reporte="implementaciones" onclick={descargar}>
+                    Implementaciones
+                    <span class="detalle">Hoja: Por fecha creación</span>
+                </button>
+                <button class="opcion" type="button" role="menuitem" data-reporte="proyectos" onclick={descargar}>
+                    Proyectos
+                    <span class="detalle">Hoja: Fecha de creación</span>
+                </button>
+                <p class="nota">Usa los filtros del panel. El rango de fechas se aplica a la fecha de creación del registro.</p>
+            </div>
+        </template>
+        <template lwc:if={hayAviso}>
+            <div class={claseAviso} role={rolAviso} title="Clic para cerrar" onclick={cerrarAviso}>{textoAviso}</div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,71 @@
+/* Los colores vienen de implementacionesPanelV2 (variables heredadas). */
+:host { display: block; }
+button:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; border-radius: 0.125rem; }
+.plegar { --icono-color: var(--accion); flex: none; }
+
+/* se despliega desde el indicador que se tocó */
+.drill {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--panel);
+    border: 1px solid var(--accion);
+    border-radius: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--tinta);
+    transform-origin: top center;
+    animation: desplegar 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes desplegar { from { opacity: 0; transform: translateY(-0.5rem) scale(0.992); } to { opacity: 1; transform: none; } }
+.drill_cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.drill_titulo { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
+.nota { margin: 0.125rem 0 0; color: var(--tenue); font-size: 0.75rem; }
+.vacio { margin: 0; color: var(--tenue); }
+.mas { display: flex; justify-content: center; }
+
+.filas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.375rem; }
+.fila { border: 1px solid var(--linea); border-radius: 0.5rem; background: var(--bloque); }
+.fila_abierta { border-color: var(--linea-fuerte); }
+.fila_boton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    min-height: 2.75rem;
+    padding: 0.625rem 0.75rem;
+    border: none;
+    background: none;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: background-color 120ms ease, transform 100ms ease-out;
+}
+.fila_boton:hover { background: var(--accion-fondo); }
+.fila_boton:active { transform: scale(0.99); }
+.fila_nombre { font-weight: 700; flex: 1 1 14rem; min-width: 0; overflow-wrap: anywhere; }
+.fila_meta { color: var(--tenue); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.fila_detalle { padding: 0 0.5rem 0.5rem; animation: desplegar 240ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+.chip { font-size: 0.6875rem; font-weight: 700; padding: 0.125rem 0.5rem; border-radius: 1rem; white-space: nowrap; background: var(--neutro-fondo); color: var(--neutro-texto); }
+.chip_noIniciada { background: var(--etapa-inicio); color: var(--etapa-inicio-texto); }
+.chip_agendada, .chip_kickoff { background: var(--etapa-media); color: var(--etapa-texto); }
+.chip_enProceso { background: var(--etapa-avanzada); color: var(--etapa-texto); }
+.chip_entregaFinal { background: var(--info-fondo2); color: var(--info-texto); }
+.chip_finalizada { background: var(--ok-fondo); color: var(--ok); }
+.chip_enPausa { background: var(--alerta-fondo); color: var(--alerta-oscuro); }
+.texto_tono_ok { color: var(--ok); font-size: 0.75rem; font-weight: 600; }
+.texto_tono_info { color: var(--info-texto); font-size: 0.75rem; font-weight: 600; }
+.texto_tono_precaucion { color: var(--precaucion-texto); font-size: 0.75rem; font-weight: 600; }
+.texto_tono_alerta { color: var(--alerta-oscuro); font-size: 0.75rem; font-weight: 600; }
+.texto_tono_critico { color: var(--critico); font-size: 0.75rem; font-weight: 700; }
+.texto_tono_neutro { color: var(--tenue); font-size: 0.75rem; }
+
+@media (prefers-reduced-motion: reduce) {
+    .drill, .fila_detalle { animation: none; }
+    .fila_boton { transition: none; }
+    .fila_boton:active { transform: none; }
+}

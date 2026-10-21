@@ -1,0 +1,10 @@
+<template>
+    <label class="campo">
+        <span class="etiqueta">{label}</span>
+        <select class="control" onchange={cambiar}>
+            <template for:each={opciones} for:item="o">
+                <option key={o.value} value={o.value} selected={o.seleccionada}>{o.label}</option>
+            </template>
+        </select>
+    </label>
+</template>

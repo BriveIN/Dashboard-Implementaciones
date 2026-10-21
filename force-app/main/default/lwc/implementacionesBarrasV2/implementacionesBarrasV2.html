@@ -1,0 +1,45 @@
+<template>
+    <div class={claseBarras} role="table">
+        <template lwc:if={esSimple}>
+            <template lwc:if={seleccionable}>
+                <template for:each={vista} for:item="b">
+                    <button key={b.clave} class={b.claseFila} data-clave={b.clave} aria-pressed={b.activa} title={b.titulo} onclick={elegir}>
+                        <span class="etiqueta"><span lwc:if={b.marca} class={b.claseMarca}></span>{b.etiqueta}</span>
+                        <span class="pista"><span class={b.claseSegmento} style={b.estilo}></span></span>
+                        <span class="num fuerte">{b.totalTexto}</span>
+                    </button>
+                </template>
+            </template>
+            <template lwc:else>
+                <template for:each={vista} for:item="b">
+                    <div key={b.clave} class="fila" role="row">
+                        <span class="etiqueta" role="cell"><span lwc:if={b.marca} class={b.claseMarca}></span>{b.etiqueta}</span>
+                        <span class="pista" title={b.titulo} role="cell"><span class={b.claseSegmento} style={b.estilo}></span></span>
+                        <span class="num fuerte" role="cell">{b.totalTexto}</span>
+                    </div>
+                </template>
+            </template>
+        </template>
+        <template lwc:else>
+            <div class="fila encabezado" role="row">
+                <span role="columnheader"></span>
+                <span role="columnheader"></span>
+                <span class="num" role="columnheader"><span class={claseMuestra1}></span>{serie1}</span>
+                <span class="num" role="columnheader"><span class={claseMuestra2}></span>{serie2}</span>
+                <span class="num" role="columnheader">Total</span>
+            </div>
+            <template for:each={vista} for:item="b">
+                <div key={b.clave} class="fila" role="row">
+                    <span class="etiqueta" role="cell"><span lwc:if={b.marca} class={b.claseMarca}></span>{b.etiqueta}</span>
+                    <span class="pista" title={b.titulo} role="cell">
+                        <span class={b.claseSegmento1} style={b.estilo1}></span>
+                        <span class={b.claseSegmento2} style={b.estilo2}></span>
+                    </span>
+                    <span class="num" role="cell">{b.primeraTexto}</span>
+                    <span class="num" role="cell">{b.segundaTexto}</span>
+                    <span class="num fuerte" role="cell">{b.totalTexto}</span>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>

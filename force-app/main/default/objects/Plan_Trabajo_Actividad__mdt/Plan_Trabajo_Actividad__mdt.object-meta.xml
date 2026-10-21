@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Mapeo del Plan de trabajo: cada registro es una fila (actividad) del plan y dice de qué campos de la Implementación sale. Para agregar una actividad nueva: un registro, sin código.</description>
+    <label>Actividad del plan de trabajo</label>
+    <pluralLabel>Actividades del plan de trabajo</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

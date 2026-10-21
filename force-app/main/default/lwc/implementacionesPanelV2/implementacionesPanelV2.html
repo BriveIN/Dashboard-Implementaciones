@@ -1,0 +1,755 @@
+<template>
+    <div class="tablero">
+        <header class="encabezado">
+            <div class="identidad">
+                <img class="logo" src={logoBrive} alt="Brivé" />
+                <span class="identidad_separador" aria-hidden="true"></span>
+                <div>
+                    <h1 class="titulo">Implementaciones y proyectos</h1>
+                    <p class="subtitulo">{estadoActualizacion}</p>
+                </div>
+            </div>
+            <div class="acciones">
+                <c-implementaciones-descarga-v2 filtros-reporte={filtrosReporte}></c-implementaciones-descarga-v2>
+                <button class="boton_primario" onclick={actualizar} disabled={cargando} aria-busy={ariaCargando}>{textoActualizar}</button>
+            </div>
+        </header>
+
+        <!-- ===== Filtros: resumen siempre visible, controles al abrir ===== -->
+        <section class="filtros" aria-label="Filtros">
+            <div class="filtros_resumen">
+                <div class="filtros_principal">
+                    <div class="periodo_bloque">
+                        <span class="etiqueta_pequena">Periodo</span>
+                        <strong class="periodo_actual">{textoPeriodo}</strong>
+                    </div>
+                    <div class="filtros_activos">
+                        <span class="etiqueta_pequena">Filtros activos</span>
+                        <ul class="chips_filtros" aria-label="Filtros activos">
+                            <template for:each={chipsFiltros} for:item="c">
+                                <li key={c.campo} class="chip_filtro">
+                                    {c.texto}
+                                    <button class="chip_quitar" data-campo={c.campo} onclick={quitarFiltro} title={c.textoQuitar}
+                                        aria-label={c.textoQuitar}>
+                                        <lightning-icon icon-name="utility:close" size="xx-small"></lightning-icon>
+                                    </button>
+                                </li>
+                            </template>
+                            <template lwc:if={sinFiltros}>
+                                <li class="sin_filtros">Sin filtros activos</li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+                <div class="filtros_acciones">
+                    <button class="boton_texto" onclick={limpiarFiltros} disabled={sinFiltros}>Quitar todos</button>
+                    <button class="boton_filtros" aria-expanded={ariaFiltros} aria-controls="panel-filtros" onclick={alternarFiltros}>
+                        {textoBotonFiltros}
+                        <lightning-icon icon-name={iconoBotonFiltros} size="xx-small"></lightning-icon>
+                    </button>
+                </div>
+            </div>
+            <template lwc:if={filtrosAbiertos}>
+                <div class="filtros_panel" id="panel-filtros">
+                    <div class="fila_corte">
+                        <p class="aviso_corte"><strong>Corte de información:</strong> {avisoCorte}</p>
+                        <button class="interruptor" role="switch" aria-checked={ariaPruebas} onclick={alternarPruebas}
+                            title="Mostrar u ocultar la cuenta de pruebas (Patito)">
+                            <span class="interruptor_texto">
+                                <span>Cuenta de pruebas</span>
+                                <strong>{textoPruebas}</strong>
+                            </span>
+                            <span class="interruptor_pista" aria-hidden="true"><span class="interruptor_perilla"></span></span>
+                        </button>
+                    </div>
+                    <div class="filtros_periodo">
+                        <lightning-combobox label="Rango según" value={filtros.campoFecha} options={opcionesCampoFecha}
+                            data-campo="campoFecha" onchange={cambiarFiltro}></lightning-combobox>
+                        <lightning-combobox label="Mes" value={filtros.mes} options={opcionesMes}
+                            data-campo="mes" onchange={cambiarFiltro}></lightning-combobox>
+                        <lightning-input type="date" label="Desde" value={filtros.desde} min={fechaMinima}
+                            data-campo="desde" onchange={cambiarFecha}></lightning-input>
+                        <lightning-input type="date" label="Hasta" value={filtros.hasta} min={fechaMinima}
+                            data-campo="hasta" onchange={cambiarFecha}></lightning-input>
+                    </div>
+                    <div class="filtros_resto">
+                        <lightning-combobox label="Estatus" value={filtros.etapa} options={opcionesEtapa}
+                            data-campo="etapa" onchange={cambiarFiltro}></lightning-combobox>
+                        <lightning-combobox label="Responsable" value={filtros.responsable} options={opcionesResponsable}
+                            data-campo="responsable" onchange={cambiarFiltro}></lightning-combobox>
+                        <lightning-combobox label="Asociado" value={filtros.asociado} options={opcionesAsociado}
+                            data-campo="asociado" onchange={cambiarFiltro}></lightning-combobox>
+                        <lightning-combobox label="Cuenta comercial" value={filtros.cuenta} options={opcionesCuenta}
+                            data-campo="cuenta" onchange={cambiarFiltro}></lightning-combobox>
+                        <lightning-combobox label="Solución adquirida" value={filtros.solucion} options={opcionesSolucion}
+                            data-campo="solucion" onchange={cambiarFiltro}></lightning-combobox>
+                        <lightning-combobox label="Propietario del programa" value={filtros.area} options={opcionesArea}
+                            data-campo="area" onchange={cambiarFiltro}></lightning-combobox>
+                    </div>
+                    <div class="filtros_mas">
+                        <button class="boton_texto" aria-expanded={ariaMasFiltros} onclick={alternarMasFiltros}>
+                            {textoMasFiltros}
+                            <lightning-icon icon-name={iconoMasFiltros} size="xx-small"></lightning-icon>
+                        </button>
+                        <template lwc:if={masFiltrosAbiertos}>
+                            <div class="filtros_resto">
+                                <lightning-combobox label="Producto" value={filtros.producto} options={opcionesProducto}
+                                    data-campo="producto" onchange={cambiarFiltro}></lightning-combobox>
+                                <lightning-combobox label="Controles de cambio" value={filtros.cambios} options={opcionesCambios}
+                                    data-campo="cambios" onchange={cambiarFiltro}></lightning-combobox>
+                                <lightning-combobox label="Consumo de horas" value={filtros.consumo} options={opcionesConsumo}
+                                    data-campo="consumo" onchange={cambiarFiltro}></lightning-combobox>
+                                <lightning-combobox label="Actividades realizadas" value={filtros.grupo} options={opcionesGrupo}
+                                    data-campo="grupo" onchange={cambiarFiltro}></lightning-combobox>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="filtros_pie">
+                        <span class="filtros_nota">Los filtros se aplican al elegirlos.</span>
+                        <div class="filtros_acciones">
+                            <button class="boton_secundario" onclick={limpiarFiltros} disabled={sinFiltros}>Quitar filtros</button>
+                            <button class="boton_primario" onclick={alternarFiltros}>Listo</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </section>
+
+        <template lwc:if={error}>
+            <div class="aviso" role="alert">{error}</div>
+        </template>
+
+        <template lwc:if={cargandoInicial}>
+            <div class="cargando"><lightning-spinner alternative-text="Cargando" size="small"></lightning-spinner></div>
+        </template>
+
+        <template lwc:if={sinDatos}>
+            <div class="aviso aviso_alerta" role="status">No hay implementaciones ni proyectos con fechas o actividades desde el 1 de octubre de 2026.</div>
+        </template>
+
+        <template lwc:if={hayDatos}>
+            <!-- ===== Vista general | Implementaciones | Proyectos ===== -->
+            <nav class="pestanas" role="tablist" aria-label="Vistas del panel">
+                <template for:each={vistas} for:item="v">
+                    <button key={v.valor} class={v.clase} role="tab" aria-selected={v.seleccionada}
+                        data-valor={v.valor} onclick={cambiarVista}>
+                        <span>{v.etiqueta}</span><span class="pestana_conteo">{v.conteo}</span>
+                    </button>
+                </template>
+            </nav>
+
+            <template lwc:if={sinResultados}>
+                <div class="aviso aviso_alerta" role="status">Ningún registro cumple estos filtros. Quita alguno de los filtros activos o <button class="boton_texto" onclick={limpiarFiltros}>quita todos</button>.</div>
+            </template>
+
+            <template lwc:if={hayRegistros}>
+                <!-- ===== Indicadores ===== -->
+                <section class="seccion_panel" aria-label="Indicadores">
+                    <div class="encabezado_seccion">
+                        <div>
+                            <p class="sobretitulo">{sobretituloIndicadores}</p>
+                            <h2 class="titulo_seccion">Indicadores</h2>
+                        </div>
+                        <span class="panel_nota">Corte desde el 1 de octubre de 2026</span>
+                    </div>
+                    <div class="rejilla_kpi rejilla_kpi_principal" role="group" aria-label="Indicadores">
+                        <template for:each={vm.kpis} for:item="k">
+                            <template lwc:if={k.esBoton}>
+                                <button key={k.id} class={k.clase} aria-pressed={k.ariaPresionado} title={k.ayuda}
+                                    data-filtro={k.filtro} data-valor={k.valorFiltro} data-lugar="kpis" onclick={filtrarDesdeIndicador}>
+                                    <span class="kpi_cabecera">
+                                        <span class="kpi_icono"><lightning-icon icon-name={k.icono} size="x-small"></lightning-icon></span>
+                                        <span class="kpi_etiqueta">{k.etiqueta}</span>
+                                    </span>
+                                    <span class="kpi_valor">{k.valor}</span>
+                                    <span class="kpi_nota">{k.nota}</span>
+                                    <span class="kpi_accion">{k.accion}</span>
+                                </button>
+                            </template>
+                            <template lwc:else>
+                                <div key={k.id} class={k.clase}>
+                                    <span class="kpi_cabecera">
+                                        <span class="kpi_icono"><lightning-icon icon-name={k.icono} size="x-small"></lightning-icon></span>
+                                        <span class="kpi_etiqueta">{k.etiqueta}</span>
+                                    </span>
+                                    <span class="kpi_valor">{k.valor}</span>
+                                    <span class="kpi_nota">{k.nota}</span>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </section>
+                <template lwc:if={drillKpis}>
+                    <c-implementaciones-lista-v2 titulo={drillKpis.titulo} registros={drillKpis.registros} oncerrar={cerrarDrill} onabrir={abrirRegistro}></c-implementaciones-lista-v2>
+                </template>
+
+                <!-- ===== Estatus actual: la etapa del registro, no las actividades ===== -->
+                <section class="panel" aria-label="Estatus actual">
+                    <div class="encabezado_seccion">
+                        <div>
+                            <p class="sobretitulo">Seguimiento operativo</p>
+                            <h2 class="titulo_seccion">Estatus actual</h2>
+                        </div>
+                        <span class="panel_nota">Es la etapa en la que está hoy cada registro. Toca una etapa o un aviso para ver sus registros aquí mismo.</span>
+                    </div>
+                    <div class="camino_fila">
+                        <ol class="camino" aria-label="Etapas en orden">
+                            <template for:each={vm.camino.pasos} for:item="p">
+                                <li key={p.id} class={p.claseLi}>
+                                    <button class="paso_boton" aria-pressed={p.activo} data-filtro="etapa" data-valor={p.id} data-lugar="estatus"
+                                        onclick={filtrarDesdeIndicador}>
+                                        <span class="paso_etapa">{p.etapa}</span>
+                                        <span class="paso_valor">{p.valor}</span>
+                                        <span class="paso_nota">{p.nota}</span>
+                                    </button>
+                                </li>
+                            </template>
+                        </ol>
+                        <button class={vm.camino.pausa.claseLi} aria-pressed={vm.camino.pausa.activo} data-filtro="etapa" data-lugar="estatus"
+                            data-valor={vm.camino.pausa.id} onclick={filtrarDesdeIndicador}>
+                            <span class="paso_etapa">{vm.camino.pausa.etapa}</span>
+                            <span class="paso_valor">{vm.camino.pausa.valor}</span>
+                            <span class="paso_nota">{vm.camino.pausa.nota}</span>
+                        </button>
+                    </div>
+                    <div class="encabezado_seccion encabezado_subseccion">
+                        <div>
+                            <p class="sobretitulo">Prioridad</p>
+                            <h3 class="titulo_subseccion">Requiere atención</h3>
+                        </div>
+                    </div>
+                    <div class="atencion" role="group" aria-label="Requiere atención">
+                        <template for:each={vm.atencion} for:item="a">
+                            <button key={a.id} class={a.clase} aria-pressed={a.ariaPresionado} title={a.detalle}
+                                data-filtro={a.filtro} data-valor={a.valor} data-lugar="estatus" onclick={filtrarDesdeIndicador}>
+                                <span class="atencion_icono"><lightning-icon icon-name={a.icono} size="x-small"></lightning-icon></span>
+                                <span class="atencion_texto">
+                                    <span class="atencion_etiqueta">{a.etiqueta}</span>
+                                    <span class="atencion_valor">{a.n}</span>
+                                </span>
+                                <span class="pildora">{a.pildora}</span>
+                            </button>
+                        </template>
+                    </div>
+                    <template lwc:if={drillEstatus}>
+                        <c-implementaciones-lista-v2 titulo={drillEstatus.titulo} registros={drillEstatus.registros} oncerrar={cerrarDrill} onabrir={abrirRegistro}></c-implementaciones-lista-v2>
+                    </template>
+                    <p class="panel_pie">El estatus no depende de las actividades: un registro puede estar en una etapa sin haber completado todas sus secciones. Las actividades confirman qué secciones se completaron.</p>
+                </section>
+
+                <!-- ===== Por propietario del programa: cada bloque filtra ===== -->
+                <section class="panel" aria-label="Por propietario del programa">
+                    <div class="encabezado_seccion">
+                        <div>
+                            <p class="sobretitulo">Agrupado por área</p>
+                            <h2 class="titulo_seccion">Propietario del programa</h2>
+                        </div>
+                        <span class="panel_nota">Toca un bloque para acotar; vuelve a tocarlo para quitarlo.</span>
+                    </div>
+                    <ul class="areas">
+                        <template for:each={vm.distribucion.areas} for:item="a">
+                            <li key={a.clave}>
+                                <button class={a.clase} aria-pressed={a.ariaPresionado} data-filtro="area" data-clave={a.clave}
+                                    data-lugar="areas" onclick={filtrarDesdeTarjeta}>
+                                    <span class="area_cabecera">
+                                        <span class="tarjeta_nombre">{a.etiqueta}</span>
+                                        <span class="tarjeta_valor">{a.total}</span>
+                                    </span>
+                                    <span class="area_datos">
+                                        <span>{a.enCurso} en curso</span>
+                                        <span>{a.finalizadas} finalizados</span>
+                                        <span>{a.enPausa} en pausa</span>
+                                    </span>
+                                    <span class="area_horas">Horas consumidas: {a.horas}</span>
+                                    <span class="area_personas">
+                                        <template for:each={a.personas} for:item="p">
+                                            <span key={p.clave} class="area_persona">{p.texto}</span>
+                                        </template>
+                                    </span>
+                                </button>
+                            </li>
+                        </template>
+                    </ul>
+                    <template lwc:if={drillAreas}>
+                        <c-implementaciones-lista-v2 titulo={drillAreas.titulo} registros={drillAreas.registros} oncerrar={cerrarDrill} onabrir={abrirRegistro}></c-implementaciones-lista-v2>
+                    </template>
+                </section>
+
+                <!-- ===== Dónde se concentran: cada tarjeta filtra ===== -->
+                <section class="panel" aria-label="Distribución de los registros">
+                    <div class="encabezado_seccion">
+                        <div>
+                            <p class="sobretitulo">Distribución</p>
+                            <h2 class="titulo_seccion">Dónde se concentran</h2>
+                        </div>
+                        <span class="panel_nota">Número de registros de cada uno. Toca una tarjeta para acotar; vuelve a tocarla para quitarla.</span>
+                    </div>
+                    <div class="rejilla_dos">
+                        <div class="grupo_tarjetas">
+                            <h3 class="panel_titulo">Por responsable</h3>
+                            <p class="panel_nota">Incluye registros sin responsable</p>
+                            <ul class="tarjetas">
+                                <template for:each={vm.distribucion.responsable} for:item="t">
+                                    <li key={t.clave}>
+                                        <button class={t.clase} aria-pressed={t.ariaPresionado} data-filtro="responsable" data-clave={t.clave}
+                                            data-lugar="distribucion" onclick={filtrarDesdeTarjeta}>
+                                            <span class="tarjeta_nombre">{t.etiqueta}</span>
+                                            <span class="tarjeta_valor">{t.valor}</span>
+                                        </button>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        <div class="grupo_tarjetas">
+                            <h3 class="panel_titulo">Por solución</h3>
+                            <p class="panel_nota">Registros por solución adquirida</p>
+                            <ul class="tarjetas">
+                                <template for:each={vm.distribucion.solucion} for:item="t">
+                                    <li key={t.clave}>
+                                        <button class={t.clase} aria-pressed={t.ariaPresionado} data-filtro="solucion" data-clave={t.clave}
+                                            data-lugar="distribucion" onclick={filtrarDesdeTarjeta}>
+                                            <span class="tarjeta_nombre">{t.etiqueta}</span>
+                                            <span class="tarjeta_valor">{t.valor}</span>
+                                        </button>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        <div class="grupo_tarjetas">
+                            <h3 class="panel_titulo">Por asociado</h3>
+                            <p class="panel_nota">Registros por persona asociada</p>
+                            <template lwc:if={vm.distribucion.sinAsociado}><p class="vacio">Ningún registro tiene asociado.</p></template>
+                            <ul class="tarjetas">
+                                <template for:each={vm.distribucion.asociado} for:item="t">
+                                    <li key={t.clave}>
+                                        <button class={t.clase} aria-pressed={t.ariaPresionado} data-filtro="asociado" data-clave={t.clave}
+                                            data-lugar="distribucion" onclick={filtrarDesdeTarjeta}>
+                                            <span class="tarjeta_nombre">{t.etiqueta}</span>
+                                            <span class="tarjeta_valor">{t.valor}</span>
+                                        </button>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        <div class="grupo_tarjetas grupo_lista">
+                            <div class="lista_cabecera">
+                                <h3 class="panel_titulo">Por cuenta comercial</h3>
+                                <span class="lista_total">{vm.distribucion.cuentaLista.textoTotal}</span>
+                            </div>
+                            <p class="panel_nota">Las 3 cuentas con más registros. Busca para ver las demás.</p>
+                            <lightning-input class="lista_buscador" type="search" label="Buscar cuenta comercial" variant="label-hidden" placeholder="Buscar cuenta comercial"
+                                value={vm.distribucion.cuentaLista.busqueda} data-campo="cuenta" onchange={buscarEnLista}></lightning-input>
+                            <template lwc:if={vm.distribucion.cuentaLista.sinDatos}><p class="vacio">Ningún registro tiene cuenta comercial.</p></template>
+                            <template lwc:if={vm.distribucion.cuentaLista.sinCoincidencias}><p class="vacio">Ninguna coincide con la búsqueda.</p></template>
+                            <ul class={vm.distribucion.cuentaLista.claseLista}>
+                                <template for:each={vm.distribucion.cuentaLista.filas} for:item="t">
+                                    <li key={t.clave}>
+                                        <button class={t.clase} aria-pressed={t.ariaPresionado} data-filtro="cuenta" data-clave={t.clave}
+                                            data-lugar="distribucion" onclick={filtrarDesdeTarjeta}>
+                                            <span class="fila_lista_nombre">{t.etiqueta}</span>
+                                            <span class="fila_lista_valor">{t.valor}</span>
+                                        </button>
+                                    </li>
+                                </template>
+                            </ul>
+                            <template lwc:if={vm.distribucion.cuentaLista.truncada}><p class="panel_nota lista_pie">{vm.distribucion.cuentaLista.textoTruncada}</p></template>
+                            <template lwc:if={vm.distribucion.cuentaLista.hayVerTodas}>
+                                <button class="boton_texto lista_ver" data-campo="cuenta" onclick={alternarLista}>{vm.distribucion.cuentaLista.textoVerTodas}</button>
+                            </template>
+                            <template lwc:if={vm.distribucion.cuentaLista.hayPlegar}>
+                                <button class="boton_texto lista_ver" data-campo="cuenta" onclick={alternarLista}>Ver menos</button>
+                            </template>
+                        </div>
+                        <div class="grupo_tarjetas grupo_lista grupo_ancho">
+                            <div class="lista_cabecera">
+                                <h3 class="panel_titulo">Por producto</h3>
+                                <span class="lista_total">{vm.distribucion.productoLista.textoTotal}</span>
+                            </div>
+                            <p class="panel_nota">Registros que incluyen cada producto de su oportunidad, por categoría. En cada una se ven los 3 con más registros; busca para ver los demás.</p>
+                            <lightning-input class="lista_buscador" type="search" label="Buscar producto" variant="label-hidden" placeholder="Buscar producto"
+                                value={vm.distribucion.productoLista.busqueda} data-campo="producto" onchange={buscarEnLista}></lightning-input>
+                            <template lwc:if={vm.distribucion.productoLista.sinDatos}><p class="vacio">Ningún registro tiene productos en su oportunidad.</p></template>
+                            <template lwc:if={vm.distribucion.productoLista.sinCoincidencias}><p class="vacio">Ningún producto coincide con la búsqueda.</p></template>
+                            <div class="categorias">
+                                <template for:each={vm.distribucion.productoLista.categorias} for:item="c">
+                                    <section key={c.clave} class="categoria">
+                                        <div class="categoria_cabecera">
+                                            <h4 class="categoria_titulo">{c.titulo}</h4>
+                                            <span class="lista_total">{c.textoTotal}</span>
+                                        </div>
+                                        <ul class={c.claseLista}>
+                                            <template for:each={c.filas} for:item="t">
+                                                <li key={t.clave}>
+                                                    <button class={t.clase} aria-pressed={t.ariaPresionado} data-filtro="producto" data-clave={t.clave}
+                                                        data-lugar="distribucion" onclick={filtrarDesdeTarjeta}>
+                                                        <span class="fila_lista_nombre">{t.etiqueta}</span>
+                                                        <span class="fila_lista_valor">{t.valor}</span>
+                                                    </button>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                        <template lwc:if={c.hayVerTodos}>
+                                            <button class="boton_texto lista_ver" data-categoria={c.clave} onclick={alternarCategoria}>{c.textoVerTodos}</button>
+                                        </template>
+                                        <template lwc:if={c.hayPlegar}>
+                                            <button class="boton_texto lista_ver" data-categoria={c.clave} onclick={alternarCategoria}>Ver menos</button>
+                                        </template>
+                                    </section>
+                                </template>
+                            </div>
+                            <template lwc:if={vm.distribucion.productoLista.hayMasCategorias}>
+                                <button class="boton_texto lista_ver" onclick={alternarCategorias}>{vm.distribucion.productoLista.textoMasCategorias}</button>
+                            </template>
+                            <template lwc:if={vm.distribucion.productoLista.hayMenosCategorias}>
+                                <button class="boton_texto lista_ver" onclick={alternarCategorias}>Ver solo las 8 principales</button>
+                            </template>
+                        </div>
+                    </div>
+                    <template lwc:if={drillDistribucion}>
+                        <c-implementaciones-lista-v2 titulo={drillDistribucion.titulo} registros={drillDistribucion.registros} oncerrar={cerrarDrill} onabrir={abrirRegistro}></c-implementaciones-lista-v2>
+                    </template>
+                </section>
+
+                <!-- ===== Registros: tablas de detalle ===== -->
+                <!-- ===== Tablas de detalle ===== -->
+                <div class="encabezado_seccion inicio_tablas">
+                    <div>
+                        <p class="sobretitulo">Detalle</p>
+                        <h2 class="titulo_seccion">Registros</h2>
+                    </div>
+                    <span class="panel_nota">Por defecto, ordenados por etapa</span>
+                </div>
+                <template for:each={tablasVisibles} for:item="t">
+                    <details key={t.clave} class="bloque" open={t.abierto} data-seccion={t.seccion} ontoggle={alternarSeccion}>
+                        <summary class="bloque_encabezado">
+                            <lightning-icon class="plegar" icon-name="utility:chevronright" size="x-small"></lightning-icon>
+                            <h2 class="bloque_titulo">{t.titulo}</h2>
+                            <span class="bloque_resumen">{t.resumenCabecera}</span>
+                        </summary>
+                        <div class="bloque_cuerpo">
+                            <div class="barra_tabla">
+                                <lightning-input class="buscador" type="search" label="Buscar" variant="label-hidden"
+                                    placeholder="Buscar por nombre, cuenta, responsable o solución" value={t.busqueda}
+                                    data-tabla={t.clave} onchange={buscar}></lightning-input>
+                                <span class="panel_nota barra_tabla_conteo">{t.resumenTabla}</span>
+                            </div>
+                            <template lwc:if={t.hayFilas}>
+                                <div class="tabla_scroll">
+                                    <table class="tabla">
+                                        <thead>
+                                            <tr>
+                                                <template for:each={t.encabezados} for:item="c">
+                                                    <th key={c.campo} class={c.clase} aria-sort={c.aria}>
+                                                        <button class="orden" data-tabla={t.clave} data-campo={c.campo} onclick={ordenarPor}>
+                                                            {c.etiqueta}
+                                                            <template lwc:if={c.icono}>
+                                                                <lightning-icon class="orden_indicador" icon-name={c.icono} size="xx-small"
+                                                                    alternative-text={c.textoOrden}></lightning-icon>
+                                                            </template>
+                                                        </button>
+                                                    </th>
+                                                </template>
+                                            </tr>
+                                        </thead>
+                                        <template for:each={t.filas} for:item="f">
+                                            <tbody key={f.id} class={f.clase}>
+                                                <tr>
+                                                    <td>
+                                                        <div class="celda_nombre">
+                                                            <button class="expandir" data-tabla={t.clave} data-id={f.id} aria-expanded={f.ariaAbierta}
+                                                                title={f.textoAbrir} onclick={alternarFila}>
+                                                                <lightning-icon icon-name={f.iconoAbrir} size="xx-small"
+                                                                    alternative-text={f.textoAbrir}></lightning-icon>
+                                                            </button>
+                                                            <div>
+                                                                <button class="enlace" data-tabla={t.clave} data-id={f.id} onclick={alternarFila}>{f.nombre}</button>
+                                                                <template lwc:if={f.prueba}><span class="prueba">Prueba</span></template>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{f.empresa}</td>
+                                                    <td><span class={f.claseResponsable}>{f.responsable}</span></td>
+                                                    <td>{f.asociado}</td>
+                                                    <td>{f.solucion}</td>
+                                                    <td><span class={f.claseEtapa}>{f.etapa}</span></td>
+                                                    <td class="fecha">{f.acordada}</td>
+                                                    <td class="fecha">{f.kickoff}</td>
+                                                    <td class="num">{f.contratadas}</td>
+                                                    <td class="num">{f.consumidas}</td>
+                                                    <td class={f.claseRestantes}>{f.restantes}</td>
+                                                    <td class="num">
+                                                        <template lwc:if={f.hayPct}>
+                                                            <span class="avance"><span class={f.clasePct} style={f.estiloPct}></span></span>
+                                                        </template>
+                                                        {f.pct}
+                                                        <span class={f.claseEstadoHoras}>{f.estadoHoras}</span>
+                                                    </td>
+                                                    <td class="num">{f.actividades}</td>
+                                                    <td class={f.claseCambios}>{f.cambios}</td>
+                                                </tr>
+                                                <template lwc:if={f.abierta}>
+                                                    <tr class="fila_expansion">
+                                                        <td colspan={t.columnas}>
+                                                            <div class={f.claseExpansion}>
+                                                                <c-implementaciones-detalle-v2 registro={f.registro}
+                                                                    data-tabla={t.clave} data-id={f.id} onabrir={abrirRegistro}
+                                                                    oncerrar={cerrarFila}></c-implementaciones-detalle-v2>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </template>
+                                    </table>
+                                </div>
+                                <template lwc:if={t.hayMas}>
+                                    <div class="mas"><lightning-button label="Mostrar más" data-tabla={t.clave} onclick={mostrarMas}></lightning-button></div>
+                                </template>
+                            </template>
+                            <template lwc:else>
+                                <p class="vacio">{t.vacio}</p>
+                            </template>
+                        </div>
+                    </details>
+                </template>
+                <div class="encabezado_seccion">
+                    <div>
+                        <p class="sobretitulo">Detalle para seguimiento</p>
+                        <h2 class="titulo_seccion">Análisis complementario</h2>
+                    </div>
+                    <span class="panel_nota">Los tres bloques empiezan plegados</span>
+                </div>
+                <!-- ===== Actividades ===== -->
+                <details class="bloque" open={secciones.actividades} data-seccion="actividades" ontoggle={alternarSeccion}>
+                    <summary class="bloque_encabezado">
+                        <lightning-icon class="plegar" icon-name="utility:chevronright" size="x-small"></lightning-icon>
+                        <span class="bloque_letra" aria-hidden="true">A</span>
+                        <span class="bloque_textos">
+                            <h2 class="bloque_titulo">Actividades</h2>
+                            <span class="bloque_subtitulo">Captura, grupos y distribución desde el corte</span>
+                        </span>
+                        <span class="bloque_resumen">{vm.actividades.total} generadas desde el 1 de octubre</span>
+                    </summary>
+                    <div class="bloque_cuerpo">
+                        <div class="rejilla_kpi rejilla_kpi_extra" role="group" aria-label="Actividades por grupo">
+                            <template for:each={vm.actividades.porGrupo} for:item="g">
+                                <button key={g.id} class={g.clase} aria-pressed={g.ariaPresionado} data-filtro="grupo" data-lugar="actividades"
+                                    data-valor={g.id} onclick={filtrarDesdeIndicador}>
+                                    <span class="kpi_etiqueta">{g.etiqueta}</span>
+                                    <span class="kpi_valor">{g.valor}</span>
+                                    <span class="kpi_nota">{g.nota}</span>
+                                </button>
+                            </template>
+                        </div>
+                        <template lwc:if={vm.actividades.notaGrupos}><p class="panel_nota">{vm.actividades.notaGrupos}</p></template>
+                        <template lwc:if={drillActividades}>
+                            <c-implementaciones-lista-v2 titulo={drillActividades.titulo} registros={drillActividades.registros} oncerrar={cerrarDrill} onabrir={abrirRegistro}></c-implementaciones-lista-v2>
+                        </template>
+                        <div class="dos_columnas">
+                            <div class="panel">
+                                <h3 class="panel_titulo">Por sección</h3>
+                                <p class="panel_nota">La sección que detonó cada actividad.</p>
+                                <c-implementaciones-barras-v2 modo="simple" tono1="info" filas={vm.actividades.porSeccion} etiqueta-ancha></c-implementaciones-barras-v2>
+                            </div>
+                            <div class="panel">
+                                <h3 class="panel_titulo">Por etapa</h3>
+                                <c-implementaciones-barras-v2 modo="simple" tono1="infoClaro" filas={vm.actividades.porEtapa}></c-implementaciones-barras-v2>
+                                <h3 class="panel_titulo panel_titulo_aparte">Por solución</h3>
+                                <c-implementaciones-barras-v2 modo="simple" tono1="info" filas={vm.actividades.porSolucion} etiqueta-ancha></c-implementaciones-barras-v2>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel_cabecera">
+                                <h3 class="panel_titulo">Qué se capturó en cada actividad</h3>
+                                <span class="panel_nota">{vm.actividades.nota}</span>
+                            </div>
+                            <div class="segmentos_fila">
+                                <div class="segmentos" role="group" aria-label="Filtrar actividades por grupo">
+                                    <template for:each={vm.actividades.segmentos} for:item="s">
+                                        <button key={s.valor} class={s.clase} aria-pressed={s.seleccionado} data-valor={s.valor}
+                                            onclick={cambiarGrupoActividades}>{s.etiqueta}</button>
+                                    </template>
+                                </div>
+                                <button class={vm.actividades.claseLupa} aria-expanded={vm.actividades.ariaBuscando} aria-controls="buscar-actividades"
+                                    title="Buscar una actividad" onclick={alternarBusquedaActividades}>
+                                    <lightning-icon icon-name="utility:search" size="x-small" alternative-text="Buscar una actividad"></lightning-icon>
+                                </button>
+                            </div>
+                            <template lwc:if={vm.actividades.buscando}>
+                                <div id="buscar-actividades" class="buscar_actividades">
+                                    <lightning-input class="buscador_actividades" type="search" label="Buscar una actividad" variant="label-hidden"
+                                        placeholder="Buscar por asunto, registro, sección, etapa o contenido" value={vm.actividades.busqueda}
+                                        onchange={buscarActividades} onkeydown={teclaBuscarActividades}></lightning-input>
+                                </div>
+                            </template>
+                            <template lwc:if={vm.actividades.hayLista}>
+                                <ul class="lista_actividades">
+                                    <template for:each={vm.actividades.lista} for:item="a">
+                                        <li key={a.clave}>
+                                            <details class="actividad">
+                                                <summary class="actividad_cabecera">
+                                                    <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                                                    <span class="actividad_asunto">{a.asunto}</span>
+                                                    <span class="chip chip_seccion">{a.seccion}</span>
+                                                    <span class="chip chip_etapa">{a.etapa}</span>
+                                                    <span class="actividad_fecha">{a.fecha}<template lwc:if={a.horas}> · {a.horas}</template></span>
+                                                    <template lwc:if={a.vistaPrevia}><span class="vista_previa">{a.vistaPrevia}</span></template>
+                                                </summary>
+                                                <div class="actividad_cuerpo">
+                                                    <p class="actividad_registro">Registro: <button class="enlace" data-id={a.registroId} onclick={abrirRegistro}>{a.registro}</button></p>
+                                                    <dl class="pares">
+                                                        <template for:each={a.resumen} for:item="x">
+                                                            <div key={x.clave} class="par">
+                                                                <dt>{x.etiqueta}</dt>
+                                                                <dd class="valor_texto">
+                                                                    <template lwc:if={x.esLiga}><a href={x.valor} target="_blank" rel="noopener noreferrer">{x.valor}</a></template>
+                                                                    <template lwc:else>{x.valor}</template>
+                                                                </dd>
+                                                            </div>
+                                                        </template>
+                                                    </dl>
+                                                    <template lwc:if={a.liga}><p class="panel_nota"><a href={a.liga} target="_blank" rel="noopener noreferrer">Liga de la sesión</a></p></template>
+                                                </div>
+                                            </details>
+                                        </li>
+                                    </template>
+                                </ul>
+                                <template lwc:if={vm.actividades.hayMas}>
+                                    <div class="mas"><lightning-button label={vm.actividades.textoMas} onclick={mostrarMasActividades}></lightning-button></div>
+                                </template>
+                            </template>
+                            <template lwc:else>
+                                <p class="vacio">No hay actividades con estos filtros.</p>
+                            </template>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- ===== Horas ===== -->
+                <details class="bloque" open={secciones.horas} data-seccion="horas" ontoggle={alternarSeccion}>
+                    <summary class="bloque_encabezado">
+                        <lightning-icon class="plegar" icon-name="utility:chevronright" size="x-small"></lightning-icon>
+                        <span class="bloque_letra" aria-hidden="true">B</span>
+                        <span class="bloque_textos">
+                            <h2 class="bloque_titulo">Horas contratadas, consumidas y restantes</h2>
+                            <span class="bloque_subtitulo">Estados de consumo y horas de las actividades</span>
+                        </span>
+                        <span class="bloque_resumen">Por registro</span>
+                    </summary>
+                    <div class="bloque_cuerpo">
+                        <div class="panel">
+                            <div class="panel_cabecera">
+                                <h3 class="panel_titulo">Estado de las horas, registro por registro</h3>
+                                <span class="panel_nota">Cada registro tiene sus propias horas contratadas, consumidas y restantes. Toca un estado para ver cuáles.</span>
+                            </div>
+                            <div class="alertas" role="group" aria-label="Estado del consumo de horas">
+                                <template for:each={vm.horas.estados} for:item="e">
+                                    <button key={e.id} class={e.clase} aria-pressed={e.ariaPresionado} title={e.detalle}
+                                        data-filtro="consumo" data-lugar="horas" data-valor={e.id} onclick={filtrarDesdeIndicador}>
+                                        <span class="alerta_valor">{e.valor}</span>
+                                        <span class="alerta_texto">
+                                            <span class="alerta_etiqueta">{e.etiqueta}</span>
+                                            <span class="alerta_detalle">{e.detalle}</span>
+                                        </span>
+                                    </button>
+                                </template>
+                            </div>
+                            <template lwc:if={drillHoras}>
+                                <c-implementaciones-lista-v2 titulo={drillHoras.titulo} registros={drillHoras.registros} oncerrar={cerrarDrill} onabrir={abrirRegistro}></c-implementaciones-lista-v2>
+                            </template>
+                            <p class="panel_pie">Los umbrales de bajo consumo (menos de 25%) y de próximo a agotar (desde 90%) están por confirmar con el equipo.</p>
+                        </div>
+                        <div class="dos_columnas">
+                            <div class="panel">
+                                <h3 class="panel_titulo">Registros más avanzados en el consumo</h3>
+                                <p class="panel_nota">Por % consumido; el color indica el estado de sus horas.</p>
+                                <template lwc:if={vm.horas.hayTop}>
+                                    <c-implementaciones-barras-v2 modo="simple" tono1="info" filas={vm.horas.topRegistros} etiqueta-ancha></c-implementaciones-barras-v2>
+                                </template>
+                                <template lwc:else><p class="vacio">Ningún registro ha consumido horas.</p></template>
+                            </div>
+                        </div>
+                        <div class="dos_columnas">
+                            <div class="panel">
+                                <h3 class="panel_titulo">Horas en las actividades, por etapa</h3>
+                                <p class="panel_nota">Suma de la "duración (horas)" del resumen de cada actividad.</p>
+                                <template lwc:if={vm.horas.hayPorEtapa}>
+                                    <c-implementaciones-barras-v2 modo="simple" tono1="info" filas={vm.horas.porEtapa}></c-implementaciones-barras-v2>
+                                </template>
+                                <template lwc:else><p class="vacio">Ninguna actividad trae horas en su resumen.</p></template>
+                            </div>
+                            <div class="panel">
+                                <h3 class="panel_titulo">Horas en las actividades, por sección</h3>
+                                <template lwc:if={vm.horas.hayPorEtapa}>
+                                    <c-implementaciones-barras-v2 modo="simple" tono1="infoClaro" filas={vm.horas.porSeccion} etiqueta-ancha></c-implementaciones-barras-v2>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="panel_pie">{vm.horas.totales}</p>
+                    </div>
+                </details>
+                <!-- ===== Tiempos y controles de cambio ===== -->
+                <details class="bloque" open={secciones.tiempos} data-seccion="tiempos" ontoggle={alternarSeccion}>
+                    <summary class="bloque_encabezado">
+                        <lightning-icon class="plegar" icon-name="utility:chevronright" size="x-small"></lightning-icon>
+                        <span class="bloque_letra" aria-hidden="true">C</span>
+                        <span class="bloque_textos">
+                            <h2 class="bloque_titulo">Tiempos y controles de cambio</h2>
+                            <span class="bloque_subtitulo">Duraciones, historiales y desviaciones de fechas</span>
+                        </span>
+                        <span class="bloque_resumen">{vm.tiempos.enPausa} en pausa</span>
+                    </summary>
+                    <div class="bloque_cuerpo">
+                        <div class="dos_columnas">
+                            <div class="panel">
+                                <h3 class="panel_titulo">Duración desde el Kickoff</h3>
+                                <p class="panel_nota">Promedio de días: de la fecha de Kickoff al último cambio de etapa (finalizadas) o a hoy (abiertas). Después del punto, cuántos registros.</p>
+                                <c-implementaciones-barras-v2 modo="simple" tono1="info" filas={vm.tiempos.duracion} etiqueta-ancha></c-implementaciones-barras-v2>
+                            </div>
+                            <div class="panel">
+                                <h3 class="panel_titulo">Tiempo por etapa</h3>
+                                <p class="panel_nota">Horas que los registros pasaron en cada etapa, según el historial de etapas.</p>
+                                <template lwc:if={vm.tiempos.hayPorEtapa}>
+                                    <c-implementaciones-barras-v2 modo="simple" tono1="info" filas={vm.tiempos.porEtapa}></c-implementaciones-barras-v2>
+                                </template>
+                                <template lwc:else><p class="vacio">Sin cambios de etapa registrados desde el 1 de octubre.</p></template>
+                            </div>
+                        </div>
+                        <div class="dos_columnas">
+                            <div class="panel">
+                                <h3 class="panel_titulo">Hitos afectados</h3>
+                                <p class="panel_nota">Cuántas veces se cambió la fecha de cada hito.</p>
+                                <template lwc:if={vm.tiempos.hayPorHito}>
+                                    <c-implementaciones-barras-v2 modo="simple" tono1="alerta" filas={vm.tiempos.porHito} etiqueta-ancha></c-implementaciones-barras-v2>
+                                </template>
+                                <template lwc:else><p class="vacio">Sin controles de cambio desde el 1 de octubre.</p></template>
+                                <template lwc:if={vm.tiempos.hayConMas}>
+                                    <h3 class="panel_titulo panel_titulo_aparte">Registros con más cambios</h3>
+                                    <c-implementaciones-barras-v2 modo="simple" tono1="alerta" filas={vm.tiempos.conMas} etiqueta-ancha></c-implementaciones-barras-v2>
+                                </template>
+                            </div>
+                            <div class="panel">
+                                <h3 class="panel_titulo">Mayores desviaciones de fechas</h3>
+                                <p class="panel_nota">Días entre la fecha anterior y la nueva. + es un atraso; − es un adelanto.</p>
+                                <template lwc:if={vm.tiempos.hayDesviaciones}>
+                                    <div class="tabla_scroll">
+                                        <table class="tabla">
+                                            <thead><tr><th>Registro</th><th>Hito</th><th>Anterior</th><th>Nueva</th><th class="num">Desviación</th></tr></thead>
+                                            <tbody>
+                                                <template for:each={vm.tiempos.desviaciones} for:item="d">
+                                                    <tr key={d.clave}><td>{d.registro}</td><td>{d.hito}</td><td>{d.anterior}</td><td>{d.nuevo}</td><td class="num"><span class={d.clase}>{d.desviacion}</span></td></tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+                                <template lwc:else><p class="vacio">Sin desviaciones registradas.</p></template>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+            </template>
+        </template>
+    </div>
+</template>

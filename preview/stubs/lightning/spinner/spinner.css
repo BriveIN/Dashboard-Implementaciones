@@ -1,0 +1,2 @@
+.spinner { width: 1.5rem; height: 1.5rem; margin: 0.75rem auto; border: 3px solid #d8e6fe; border-top-color: #0b5cab; border-radius: 50%; animation: girar 0.8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }

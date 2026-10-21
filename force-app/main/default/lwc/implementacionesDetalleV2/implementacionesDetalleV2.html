@@ -1,0 +1,311 @@
+<template>
+    <section class="detalle" aria-label={registro.nombre}>
+        <div class="detalle_cabecera">
+            <div>
+                <h3 class="detalle_nombre"><button class="detalle_enlace" onclick={abrir} title="Abrir el registro">{registro.nombre}</button></h3>
+                <p class="nota">{registro.empresa} · {registro.tipo}</p>
+            </div>
+            <div class="detalle_acciones">
+                <button class="ver_completo" onclick={abrir}>
+                    <lightning-icon icon-name="utility:new_window" size="xx-small"></lightning-icon>
+                    Abrir registro
+                </button>
+                <button class="ver_completo" onclick={descargarPlan} disabled={descargandoPlan} aria-busy={ariaOcupadoPlan}
+                    title="Excel editable con las fases y actividades de este registro, aunque el plan esté incompleto">
+                    <lightning-icon icon-name="utility:download" size="xx-small"></lightning-icon>
+                    {textoPlan}
+                </button>
+                <lightning-button-icon icon-name="utility:close" alternative-text="Cerrar" title="Cerrar"
+                    onclick={cerrar}></lightning-button-icon>
+            </div>
+        </div>
+
+        <!-- Información general -->
+        <details class="seccion" open>
+            <summary class="seccion_cabecera">
+                <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                <span class="seccion_indice" aria-hidden="true">1</span>
+                <h4 class="seccion_titulo">Información general</h4>
+            </summary>
+            <div class="seccion_cuerpo">
+                <dl class="pares pares_generales">
+                    <template for:each={generales} for:item="d">
+                        <div key={d.clave} class="par"><dt>{d.etiqueta}</dt><dd>{d.valor}</dd></div>
+                    </template>
+                </dl>
+            </div>
+        </details>
+
+        <!-- Horas: solo de este registro -->
+        <details class="seccion" open>
+            <summary class="seccion_cabecera">
+                <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                <span class="seccion_indice" aria-hidden="true">2</span>
+                <h4 class="seccion_titulo">Horas</h4>
+                <span class={horas.claseEstado}>{horas.estado}</span>
+            </summary>
+            <div class="seccion_cuerpo">
+                <div class="cifras" role="group" aria-label="Horas contratadas, consumidas y restantes">
+                    <div class="cifra">
+                        <span class="cifra_etiqueta">Contratadas</span>
+                        <span class="cifra_valor">{horas.contratadas}</span>
+                    </div>
+                    <span class="cifra_flecha" aria-hidden="true">→</span>
+                    <div class="cifra">
+                        <span class="cifra_etiqueta">Consumidas</span>
+                        <span class="cifra_valor">{horas.consumidas}</span>
+                    </div>
+                    <span class="cifra_flecha" aria-hidden="true">→</span>
+                    <div class="cifra">
+                        <span class="cifra_etiqueta">Restantes</span>
+                        <span class={horas.claseRestantes}>{horas.restantes}</span>
+                    </div>
+                    <span class="cifra_flecha" aria-hidden="true">→</span>
+                    <div class="cifra">
+                        <span class="cifra_etiqueta">% utilizado</span>
+                        <span class="cifra_valor">{horas.pct}</span>
+                    </div>
+                </div>
+                <template lwc:if={horas.hayPct}>
+                    <div class="progreso_ancho"><span class="progreso_pista progreso_pista_ancha"><span class={horas.claseBarra} style={horas.estiloBarra}></span></span></div>
+                </template>
+                <p class="nota">{horas.ayuda}. Contratadas: productos de la oportunidad. Consumidas: horas registradas en las actividades.</p>
+
+                <p class="mini_titulo">Actividades que consumieron horas</p>
+                <template lwc:if={horas.hayDesglose}>
+                    <table class="tabla_mini">
+                        <thead><tr><th>Actividad</th><th>Fecha</th><th class="num">Horas</th></tr></thead>
+                        <tbody>
+                            <template for:each={horas.desglose} for:item="d">
+                                <tr key={d.clave}><td>{d.asunto}</td><td>{d.fecha}</td><td class="num">{d.horas}</td></tr>
+                            </template>
+                        </tbody>
+                        <tfoot><tr><td colspan="2">Horas en las actividades de este panel</td><td class="num">{horas.totalDesglose}</td></tr></tfoot>
+                    </table>
+                    <template lwc:if={horas.sinDesglose}>
+                        <p class="nota">{horas.sinDesglose} h consumidas no están ligadas a una actividad fechada desde el 1 de octubre.</p>
+                    </template>
+                </template>
+                <template lwc:else>
+                    <p class="vacio">Ninguna actividad desde el 1 de octubre trae horas en su resumen.</p>
+                </template>
+            </div>
+        </details>
+
+        <!-- Avance: etapas y secciones en el orden del proceso, en un solo recuadro -->
+        <details class="seccion" open>
+            <summary class="seccion_cabecera">
+                <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                <span class="seccion_indice" aria-hidden="true">3</span>
+                <h4 class="seccion_titulo">Avance por etapa y sección</h4>
+                <span class="seccion_conteo">Etapa → sección → datos capturados → actividad → resumen</span>
+            </summary>
+            <div class="seccion_cuerpo">
+                <p class="nota">{avance.conteo}</p>
+                <div class="avance_resumen" role="list" aria-label="Avance por etapa">
+                    <template for:each={avance.resumen} for:item="g">
+                        <span key={g.clave} class="avance_item" role="listitem"><span class="avance_nombre">{g.titulo}</span><span class={g.clase}>{g.texto}</span></span>
+                    </template>
+                </div>
+                <template for:each={avance.grupos} for:item="g">
+                    <details key={g.nombre} class="grupo_avance" open={g.abierto}>
+                        <summary class="grupo_cabecera">
+                            <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                            <span class="grupo_titulo">{g.titulo}</span>
+                            <span class="grupo_resumen">{g.resumen}</span>
+                        </summary>
+                        <div class="casillas grupo_cuerpo">
+                        <template lwc:if={g.vacio}>
+                            <p class="vacio">Este registro no tiene casillas de {g.titulo} seleccionadas.</p>
+                        </template>
+                        <template for:each={g.filas} for:item="s">
+                            <details key={s.clave} class="casilla" open={s.abierta}>
+                                <summary class="casilla_cabecera">
+                                    <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                                    <span class="casilla_tema">{s.nombre}</span>
+                                    <span class={s.claseEstado}>{s.estado}</span>
+                                    <span class="casilla_linea">{s.linea}</span>
+                                </summary>
+                                <div class="casilla_cuerpo">
+                                    <div>
+                                        <p class="mini_titulo">Datos capturados</p>
+                                        <template lwc:if={s.hayDatos}>
+                                            <dl class="pares">
+                                                <template for:each={s.datos} for:item="d">
+                                                    <div key={d.clave} class="par">
+                                                        <dt>{d.etiqueta}</dt>
+                                                        <dd class="valor_texto">
+                                                            <template lwc:if={d.esLiga}><a href={d.valor} target="_blank" rel="noopener noreferrer">{d.valor}</a></template>
+                                                            <template lwc:else>{d.valor}</template>
+                                                        </dd>
+                                                    </div>
+                                                </template>
+                                            </dl>
+                                        </template>
+                                        <template lwc:else><p class="vacio">Sin datos capturados.</p></template>
+                                    </div>
+                                    <div>
+                                        <p class="mini_titulo">Actividad generada</p>
+                                        <template lwc:if={s.hayActividades}>
+                                            <template for:each={s.actividades} for:item="a">
+                                                <div key={a.clave} class="actividad_bloque">
+                                                    <p class="actividad_asunto">{a.asunto}</p>
+                                                    <p class="actividad_meta">{a.fecha}<template lwc:if={a.horas}> · {a.horas}</template></p>
+                                                    <dl class="pares pares_resumen">
+                                                        <template for:each={a.resumen} for:item="x">
+                                                            <div key={x.clave} class="par">
+                                                                <dt>{x.etiqueta}</dt>
+                                                                <dd class="valor_texto">
+                                                                    <template lwc:if={x.esLiga}><a href={x.valor} target="_blank" rel="noopener noreferrer">{x.valor}</a></template>
+                                                                    <template lwc:else>{x.valor}</template>
+                                                                </dd>
+                                                            </div>
+                                                        </template>
+                                                    </dl>
+                                                </div>
+                                            </template>
+                                        </template>
+                                        <template lwc:else><p class="vacio">Todavía no hay actividad desde el 1 de octubre.</p></template>
+                                    </div>
+                                </div>
+                            </details>
+                        </template>
+                        </div>
+                    </details>
+                </template>
+                <template lwc:if={avance.haySueltas}>
+                    <div class="casillas">
+                        <p class="mini_titulo">Actividades sin sección en el avance</p>
+                        <p class="nota">Tienen actividad registrada, pero su sección no está seleccionada en el registro o no se identificó por el asunto.</p>
+                        <template for:each={avance.sueltas} for:item="a">
+                            <div key={a.clave} class="actividad_bloque">
+                                <p class="actividad_asunto">{a.asunto}</p>
+                                <p class="actividad_meta">{a.seccion} · {a.fecha}<template lwc:if={a.horas}> · {a.horas}</template></p>
+                                <dl class="pares pares_resumen">
+                                    <template for:each={a.resumen} for:item="x">
+                                        <div key={x.clave} class="par">
+                                            <dt>{x.etiqueta}</dt>
+                                            <dd class="valor_texto">{x.valor}</dd>
+                                        </div>
+                                    </template>
+                                </dl>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                <template lwc:if={avance.haySinSeleccionar}>
+                    <p class="mini_titulo">Disponibles para {avance.solucion}, sin seleccionar</p>
+                    <div class="temas">
+                        <template for:each={avance.sinSeleccionar} for:item="s">
+                            <span key={s.clave} class="tema">{s.nombre}</span>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </details>
+
+        <!-- Actividades: todas, con su resumen -->
+        <details class="seccion">
+            <summary class="seccion_cabecera">
+                <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                <span class="seccion_indice" aria-hidden="true">4</span>
+                <h4 class="seccion_titulo">{tituloActividades}</h4>
+                <span class="seccion_conteo">De la más reciente a la más antigua</span>
+            </summary>
+            <div class="seccion_cuerpo">
+                <template lwc:if={hayActividades}>
+                    <div class="acciones_lista">
+                        <button class="boton_texto" data-lista="actividades" onclick={alternarTodas}>Abrir o cerrar todas</button>
+                    </div>
+                    <div class="casillas" data-lista="actividades">
+                        <template for:each={actividades} for:item="a">
+                            <details key={a.clave} class="casilla">
+                                <summary class="casilla_cabecera">
+                                    <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                                    <span class="casilla_tema">{a.asunto}</span>
+                                    <span class={a.claseEtapa}>{a.etapa}</span>
+                                    <span class="chip chip_seccion">{a.seccion}</span>
+                                    <span class="casilla_linea">{a.fecha}<template lwc:if={a.horas}> · {a.horas}</template></span>
+                                    <template lwc:if={a.vistaPrevia}><span class="vista_previa">{a.vistaPrevia}</span></template>
+                                </summary>
+                                <div class="actividad_cuerpo">
+                                    <dl class="pares pares_resumen">
+                                        <template for:each={a.resumen} for:item="x">
+                                            <div key={x.clave} class="par">
+                                                <dt>{x.etiqueta}</dt>
+                                                <dd class="valor_texto">
+                                                    <template lwc:if={x.esLiga}><a href={x.valor} target="_blank" rel="noopener noreferrer">{x.valor}</a></template>
+                                                    <template lwc:else>{x.valor}</template>
+                                                </dd>
+                                            </div>
+                                        </template>
+                                    </dl>
+                                    <template lwc:if={a.liga}>
+                                        <p class="nota"><a href={a.liga} target="_blank" rel="noopener noreferrer">Liga de la sesión</a></p>
+                                    </template>
+                                </div>
+                            </details>
+                        </template>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="vacio">Este registro no tiene actividades desde el 1 de octubre.</p>
+                </template>
+            </div>
+        </details>
+
+        <!-- Controles de cambio -->
+        <details class="seccion" open>
+            <summary class="seccion_cabecera">
+                <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                <span class="seccion_indice" aria-hidden="true">5</span>
+                <h4 class="seccion_titulo">{tituloCambios}</h4>
+                <span class="seccion_conteo">Cambios de fechas de hitos registrados desde el 1 de octubre</span>
+            </summary>
+            <div class="seccion_cuerpo">
+                <template lwc:if={hayCambios}>
+                    <table class="tabla_mini">
+                        <thead><tr><th>Hito afectado</th><th>Fecha anterior</th><th>Fecha nueva</th><th>Desviación</th><th>Registrado</th></tr></thead>
+                        <tbody>
+                            <template for:each={cambios} for:item="c">
+                                <tr key={c.clave}>
+                                    <td>{c.hito}</td><td>{c.anterior}</td><td>{c.nuevo}</td>
+                                    <td class={c.claseDesviacion}>{c.desviacion}</td><td>{c.registrado}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </template>
+                <template lwc:else>
+                    <p class="vacio">Sin cambios de fechas registrados desde el 1 de octubre.</p>
+                </template>
+
+                <template lwc:if={pausa.hay}>
+                    <p class="mini_titulo">Pausas</p>
+                    <dl class="pares">
+                        <div class="par"><dt>Pausas</dt><dd>{pausa.pausas}</dd></div>
+                        <div class="par"><dt>Tiempo total en pausa</dt><dd>{pausa.tiempo}</dd></div>
+                        <template lwc:if={pausa.evidencia}>
+                            <div class="par"><dt>Motivo</dt><dd class="valor_texto">{pausa.evidencia}</dd></div>
+                        </template>
+                    </dl>
+                    <template for:each={pausa.lineas} for:item="l">
+                        <p key={l.clave} class="nota">{l.texto}</p>
+                    </template>
+                </template>
+
+                <template lwc:if={hayTiempos}>
+                    <p class="mini_titulo">Tiempo por etapa desde el 1 de octubre</p>
+                    <table class="tabla_mini">
+                        <thead><tr><th>Etapa</th><th class="num">Horas en la etapa</th><th class="num">Veces</th></tr></thead>
+                        <tbody>
+                            <template for:each={tiempos} for:item="t">
+                                <tr key={t.clave}><td>{t.etapa}</td><td class="num">{t.horas}</td><td class="num">{t.veces}</td></tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </template>
+            </div>
+        </details>
+    </section>
+</template>

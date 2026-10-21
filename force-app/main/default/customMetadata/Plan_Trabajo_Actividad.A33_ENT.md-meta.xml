@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Visto bueno y firma del acta de entrega</label>
+    <protected>false</protected>
+    <values>
+        <field>Etapa__c</field>
+        <value xsi:type="xsd:string">Entrega final</value>
+    </values>
+    <values>
+        <field>Actividad__c</field>
+        <value xsi:type="xsd:string">Visto bueno y firma del acta de entrega</value>
+    </values>
+    <values>
+        <field>Aplica_A__c</field>
+        <value xsi:type="xsd:string">Ambos</value>
+    </values>
+    <values>
+        <field>Soluciones__c</field>
+        <value xsi:type="xsd:string">Todas</value>
+    </values>
+    <values>
+        <field>Campos_Inicio__c</field>
+        <value xsi:type="xsd:string">Fecha_Envio_Acta_Entrega__c</value>
+    </values>
+    <values>
+        <field>Campo_Duracion__c</field>
+        <value xsi:type="xsd:string">Duraci_n_Etapa_Entrega_Final__c</value>
+    </values>
+    <values>
+        <field>Campos_Fin__c</field>
+        <value xsi:type="xsd:string">Fecha_Recibo_VoBo_Cliente__c</value>
+    </values>
+    <values>
+        <field>Tipo_Estatus__c</field>
+        <value xsi:type="xsd:string">SeCompleto</value>
+    </values>
+    <values>
+        <field>Campo_Estatus__c</field>
+        <value xsi:type="xsd:string">Acta_de_Entrega_Firmada_Cliente__c</value>
+    </values>
+    <values>
+        <field>Asignado__c</field>
+        <value xsi:type="xsd:string">Cliente</value>
+    </values>
+    <values>
+        <field>Orden__c</field>
+        <value xsi:type="xsd:double">33</value>
+    </values>
+</CustomMetadata>

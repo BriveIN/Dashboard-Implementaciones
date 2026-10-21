@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Requiere_Dato__c</fullName>
+    <description>API name de un campo que, además de la casilla, debe tener valor para que salga la fila.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Requiere dato en</label>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

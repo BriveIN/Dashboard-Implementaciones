@@ -1,0 +1,2 @@
+:host { display: inline-flex; color: var(--icono-color, currentColor); }
+svg { display: block; }

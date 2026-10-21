@@ -1,0 +1,165 @@
+/* Los colores vienen de implementacionesPanelV2 (variables heredadas). */
+:host { display: block; }
+
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; border-radius: 0.125rem; }
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+
+/* movimiento: el chevron gira con una curva sin rebote; el contenido entra desde su origen (arriba) */
+.plegar { --icono-color: var(--accion); flex: none; transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1); }
+details[open] > summary > .plegar { transform: rotate(90deg); }
+details[open] > .seccion_cuerpo, details[open] > .casilla_cuerpo, details[open] > .actividad_cuerpo { animation: entrar 240ms cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes entrar { from { opacity: 0; transform: translateY(-0.375rem); } to { opacity: 1; transform: none; } }
+/* la respuesta empieza al tocar, no al soltar */
+button:active, summary:active { transform: scale(0.985); transition: transform 90ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+    .plegar { transition: none; }
+    details[open] > .seccion_cuerpo, details[open] > .casilla_cuerpo, details[open] > .actividad_cuerpo { animation: none; }
+    button:active, summary:active { transform: none; }
+}
+
+.detalle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.125rem;
+    background: #f8fbfc;
+    border: 1px solid #cfdde2;
+    border-radius: 0.75rem;
+    white-space: normal;
+    color: var(--tinta);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+}
+.detalle_cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.detalle_acciones { display: flex; align-items: center; gap: 0.5rem; }
+.detalle_nombre { margin: 0; font-size: 1.125rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; color: #183746; }
+.nota { margin: 0.125rem 0 0; color: var(--tenue); font-size: 0.75rem; }
+.vacio { margin: 0; color: var(--tenue); font-size: 0.8125rem; }
+.texto_critico { color: var(--critico); font-weight: 700; }
+.texto_alerta { color: var(--alerta-oscuro); font-weight: 700; }
+.texto_ok { color: var(--ok); font-weight: 700; }
+a { color: var(--accion); text-decoration-color: var(--marca); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+
+.boton_texto {
+    background: none; border: none; min-height: 2.75rem; padding: 0.25rem 0; font: inherit; font-size: 0.75rem; font-weight: 600; color: var(--accion);
+    cursor: pointer; text-decoration: underline; text-decoration-color: var(--marca); text-underline-offset: 0.2em;
+}
+.ver_completo {
+    display: inline-flex; align-items: center; gap: 0.375rem; min-height: 2.75rem; padding: 0.3125rem 0.75rem; border: 1px solid var(--linea-fuerte);
+    border-radius: 0.5625rem; background: var(--panel); font: inherit; font-size: 0.75rem; font-weight: 650; color: var(--tinta2); cursor: pointer;
+}
+.ver_completo:hover { border-color: var(--accion); background: var(--accion-fondo); }
+
+/* bloques del detalle */
+.seccion { border: 1px solid #dae4e8; border-radius: 0.5625rem; background: var(--panel); overflow: hidden; }
+.seccion_cabecera { display: flex; align-items: center; gap: 0.625rem; flex-wrap: wrap; min-height: 3.25rem; padding: 0.5625rem 0.75rem; }
+.seccion_cabecera:hover { background: #f7fafb; }
+.seccion_indice { display: inline-grid; place-items: center; flex: none; width: 1.5625rem; height: 1.5625rem; border-radius: 0.5rem; background: #edf4f6; color: #1a5b6d; font-size: 0.6875rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.seccion_titulo { margin: 0; font-size: 0.8125rem; font-weight: 700; letter-spacing: -0.005em; color: #2d4857; }
+.seccion_conteo { margin-left: auto; font-size: 0.75rem; color: var(--tenue); }
+.seccion_cuerpo { display: flex; flex-direction: column; gap: 0.875rem; padding: 0.75rem 0.875rem 1rem; border-top: 1px solid #edf1f3; }
+.mini_titulo { margin: 0.5rem 0 0.25rem; font-size: 0.75rem; color: #2a4654; font-weight: 700; }
+.acciones_lista { display: flex; justify-content: flex-end; }
+
+.pares { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.25rem 0.75rem; font-size: 0.75rem; }
+/* información general: cada campo es una celda con su nombre arriba y su valor abajo, así nunca se separan al cambiar el ancho */
+.pares_generales { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.875rem 1.25rem; }
+.pares_generales .par { display: grid; align-content: start; gap: 0.1875rem; min-width: 0; }
+.pares_generales .par dt { font-size: 0.625rem; font-weight: 650; }
+.pares_generales .par dd { font-size: 0.75rem; font-weight: 650; color: #294554; }
+.par { display: contents; }
+
+/* grupos del avance (Kickoff, Planeación, Ejecución…): plegables */
+.grupo_avance { border: 1px solid #e0e8eb; border-radius: 0.5625rem; background: var(--panel); }
+.grupo_avance + .grupo_avance { margin-top: 0.4375rem; }
+.grupo_cabecera { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; min-height: 2.75rem; padding: 0.4375rem 0.75rem; border-radius: 0.5625rem; }
+.grupo_cabecera:hover { background: #f7fafb; }
+.grupo_titulo { font-size: 0.8125rem; font-weight: 700; color: #2a4654; }
+.grupo_resumen { margin-left: auto; font-size: 0.6875rem; color: var(--tenue); }
+.grupo_cuerpo { padding: 0.25rem 0.75rem 0.75rem; }
+.grupo_cuerpo .casilla { background: var(--bloque); }
+details[open] > .grupo_cuerpo { animation: entrar 240ms cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) { details[open] > .grupo_cuerpo { animation: none; } }
+.par dt { color: var(--tenue); }
+.par dd { margin: 0; overflow-wrap: anywhere; }
+/* los textos largos se leen completos y respetan sus saltos de línea */
+.valor_texto { white-space: pre-line; }
+.pares_resumen { margin-top: 0.375rem; }
+
+/* secciones y actividades */
+.casillas { display: flex; flex-direction: column; }
+.casilla { border: 1px solid #e0e8eb; border-radius: 0.5rem; background: var(--panel); margin-top: 0.4375rem; }
+.casilla:first-of-type { margin-top: 0; }
+.casilla_cabecera { display: flex; align-items: center; gap: 0.5rem; min-height: 3rem; padding: 0.4375rem 0.625rem; border-radius: 0.5rem; flex-wrap: wrap; }
+.casilla_cabecera:hover { background: #f7fafb; }
+.casilla_tema { font-weight: 700; font-size: 0.75rem; color: #344f5d; }
+.casilla_linea { margin-left: auto; font-size: 0.75rem; color: var(--tenue); font-variant-numeric: tabular-nums; }
+.vista_previa { flex-basis: 100%; padding-left: 1.5rem; font-size: 0.75rem; color: var(--tinta2); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.casilla[open] .vista_previa { display: none; }
+.casilla_cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 1.25rem; padding: 0.25rem 0.25rem 0.875rem 1.5rem; }
+.actividad_cuerpo { padding: 0.25rem 0.25rem 0.875rem 1.5rem; }
+.actividad_bloque { padding: 0.625rem 0.75rem; background: #fbfcfd; border-radius: 0.5rem; border: 1px solid #e8edef; }
+.actividad_bloque + .actividad_bloque { margin-top: 0.5rem; }
+.actividad_asunto { margin: 0; font-weight: 700; }
+.actividad_meta { margin: 0.125rem 0 0.25rem; font-size: 0.75rem; color: var(--tenue); font-variant-numeric: tabular-nums; }
+.temas { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.tema { font-size: 0.625rem; padding: 0.25rem 0.5rem; border-radius: 0.4375rem; border: 1px dashed #bdcbd2; color: #5b707b; }
+
+/* etiquetas */
+.chip { font-size: 0.625rem; font-weight: 700; padding: 0.1875rem 0.5rem; border-radius: 999px; white-space: nowrap; background: var(--neutro-fondo); color: var(--neutro-texto); }
+.chip_seccion { background: var(--pista); color: var(--tinta2); font-weight: 600; }
+.chip_etapa_Kickoff { background: var(--etapa-media); color: var(--etapa-texto); }
+.chip_etapa_Enproceso { background: var(--etapa-avanzada); color: var(--etapa-texto); }
+.chip_etapa_Entregafinal { background: var(--ok-fondo); color: var(--ok); }
+.chip_estado_ok { background: var(--ok-fondo); color: var(--ok); }
+.chip_estado_info { background: var(--info-fondo); color: var(--info-texto); }
+.chip_estado_precaucion { background: var(--precaucion-fondo); color: var(--precaucion-texto); }
+.chip_estado_alerta { background: var(--alerta-fondo); color: var(--alerta-oscuro); }
+.chip_estado_critico { background: var(--critico-fondo); color: var(--critico); }
+.chip_estado_neutro { background: var(--neutro-fondo); color: var(--neutro-texto); }
+
+/* horas: contratadas → consumidas → restantes → % */
+.cifras { display: flex; align-items: stretch; gap: 0.4375rem; flex-wrap: wrap; padding: 0.625rem; border: 1px solid #e1e8eb; border-radius: 0.625rem; background: #f7fafb; }
+.cifra { display: flex; flex: 1 1 6rem; flex-direction: column; justify-content: center; gap: 0.1875rem; min-width: 6rem; padding: 0.5rem 0.625rem; background: var(--panel); border: 1px solid #e1e8eb; border-radius: 0.5rem; }
+.cifra_etiqueta { font-size: 0.625rem; color: #637782; }
+.cifra_valor { font-size: 1.125rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: #1f3b49; font-variant-numeric: tabular-nums; }
+.cifra_flecha { align-self: center; color: #8899a2; font-size: 1.0625rem; }
+.progreso_ancho { display: flex; }
+.progreso_pista { flex: 1; height: 0.4375rem; background: var(--pista); border-radius: 0.25rem; overflow: hidden; }
+.progreso_relleno { display: block; height: 100%; border-radius: 0.25rem; transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1); }
+.tono_ok { background: var(--ok); }
+.tono_info { background: var(--info-claro); }
+.tono_precaucion { background: var(--precaucion); }
+.tono_alerta { background: var(--alerta); }
+.tono_critico { background: var(--critico); }
+.tono_neutro { background: var(--neutro-estado); }
+@media (prefers-reduced-motion: reduce) { .progreso_relleno { transition: none; } }
+
+.tabla_mini { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.tabla_mini th { text-align: left; color: #465d6a; font-weight: 700; font-size: 0.625rem; padding: 0.5rem 0.625rem; background: #f3f7f8; border-bottom: 1px solid #dbe4e8; white-space: nowrap; }
+.tabla_mini td { padding: 0.5rem 0.625rem; border-bottom: 1px solid #e9eef0; vertical-align: top; }
+.tabla_mini th.num, .tabla_mini td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabla_mini tfoot td { font-weight: 700; border-bottom: none; }
+
+@media (max-width: 48rem) {
+    .casilla_cuerpo { grid-template-columns: 1fr; padding-left: 0.25rem; }
+    .actividad_cuerpo { padding-left: 0.25rem; }
+    .casilla_linea, .seccion_conteo { margin-left: 0; width: 100%; }
+    .vista_previa { padding-left: 0; }
+    .pares_generales { grid-template-columns: max-content minmax(0, 1fr); }
+    .cifra_flecha { display: none; }
+}
+@media (prefers-contrast: more) {
+    .seccion, .actividad_bloque, .cifra { border-color: var(--tinta2); }
+}
+
+/* resumen del avance: un chip por etapa, de un vistazo */
+.avance_resumen { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; padding-bottom: 0.25rem; }
+.avance_item { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; }
+.avance_nombre { font-weight: 700; color: var(--tinta2); }
+
+/* el título del detalle abre el registro */
+.detalle_enlace { padding: 0; border: none; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.detalle_enlace:hover { color: var(--accion); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+.ver_completo:disabled { opacity: 0.6; cursor: progress; }

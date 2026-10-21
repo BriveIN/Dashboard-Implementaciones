@@ -1,0 +1,24 @@
+node_modules/
+preview/dist/
+.sf/
+.sfdx/
+.DS_Store
+# datos reales de Brive para el visor local: no se versionan
+preview/datos-reales.json
+
+# generales
+.next/
+.vscode/
+.env*
+*.log
+node_modules.nosync/
+
+# local/agentes y temporales
+.claude/
+.agents/
+tmp_prod/
+
+# respaldos manuales y plantillas temporales
+respaldo/
+Paquete_Plan_de_trabajo_Brive*/
+Reporte/

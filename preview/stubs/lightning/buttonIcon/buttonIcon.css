@@ -1,0 +1,2 @@
+.boton { font: inherit; width: 2rem; height: 2rem; border-radius: 0.25rem; border: 1px solid #c9c9c9; background: #fff; color: var(--accion, #0b5cab); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.boton:hover { background: #f3f3f3; }

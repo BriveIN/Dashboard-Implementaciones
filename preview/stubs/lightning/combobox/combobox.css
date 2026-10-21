@@ -1,0 +1,4 @@
+:host { display: block; min-width: 0; }
+.campo { display: flex; flex-direction: column; gap: 0.125rem; }
+.etiqueta { font-size: 0.75rem; color: #444; }
+.control { font: inherit; font-size: 0.8125rem; height: 2rem; border: 1px solid #c9c9c9; border-radius: 0.25rem; padding: 0 0.5rem; background: #fff; width: 100%; }
