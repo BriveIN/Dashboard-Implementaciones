@@ -83,11 +83,11 @@
                         <tfoot><tr><td colspan="2">Horas en las actividades de este panel</td><td class="num">{horas.totalDesglose}</td></tr></tfoot>
                     </table>
                     <template lwc:if={horas.sinDesglose}>
-                        <p class="nota">{horas.sinDesglose} h consumidas no están ligadas a una actividad fechada desde el 1 de octubre.</p>
+                        <p class="nota">{horas.sinDesglose} h consumidas no están ligadas a una actividad fechada desde el 24 de septiembre.</p>
                     </template>
                 </template>
                 <template lwc:else>
-                    <p class="vacio">Ninguna actividad desde el 1 de octubre trae horas en su resumen.</p>
+                    <p class="vacio">Ninguna actividad desde el 24 de septiembre trae horas en su resumen.</p>
                 </template>
             </div>
         </details>
@@ -165,7 +165,7 @@
                                                 </div>
                                             </template>
                                         </template>
-                                        <template lwc:else><p class="vacio">Todavía no hay actividad desde el 1 de octubre.</p></template>
+                                        <template lwc:else><p class="vacio">Todavía no hay actividad desde el 24 de septiembre.</p></template>
                                     </div>
                                 </div>
                             </details>
@@ -249,7 +249,7 @@
                     </div>
                 </template>
                 <template lwc:else>
-                    <p class="vacio">Este registro no tiene actividades desde el 1 de octubre.</p>
+                    <p class="vacio">Este registro no tiene actividades desde el 24 de septiembre.</p>
                 </template>
             </div>
         </details>
@@ -260,7 +260,7 @@
                 <lightning-icon class="plegar" icon-name="utility:chevronright" size="xx-small"></lightning-icon>
                 <span class="seccion_indice" aria-hidden="true">5</span>
                 <h4 class="seccion_titulo">{tituloCambios}</h4>
-                <span class="seccion_conteo">Cambios de fechas de hitos registrados desde el 1 de octubre</span>
+                <span class="seccion_conteo">Cambios de fechas de hitos registrados desde el 24 de septiembre</span>
             </summary>
             <div class="seccion_cuerpo">
                 <template lwc:if={hayCambios}>
@@ -277,7 +277,7 @@
                     </table>
                 </template>
                 <template lwc:else>
-                    <p class="vacio">Sin cambios de fechas registrados desde el 1 de octubre.</p>
+                    <p class="vacio">Sin cambios de fechas registrados desde el 24 de septiembre.</p>
                 </template>
 
                 <template lwc:if={pausa.hay}>
@@ -295,7 +295,7 @@
                 </template>
 
                 <template lwc:if={hayTiempos}>
-                    <p class="mini_titulo">Tiempo por etapa desde el 1 de octubre</p>
+                    <p class="mini_titulo">Tiempo por etapa desde el 24 de septiembre</p>
                     <table class="tabla_mini">
                         <thead><tr><th>Etapa</th><th class="num">Horas en la etapa</th><th class="num">Veces</th></tr></thead>
                         <tbody>

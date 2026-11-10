@@ -8,7 +8,7 @@ Uso:  python3 scripts/datos_reales.py [alias_org]      (por defecto: Brive)
 El archivo resultante contiene datos de clientes: no se versiona (.gitignore) y se borra con
 `rm preview/datos-reales.json`.
 
-Corte de información: 2026-10-01. Solo entran registros con alguna fecha de trabajo o actividad desde ese día, y de
+Corte de información: 2026-09-24. Solo entran registros con alguna fecha de trabajo o actividad desde ese día, y de
 ellos solo se guardan las actividades, cambios y tiempos fechados desde ese día (igual que Apex).
 """
 import json
@@ -21,7 +21,7 @@ ORG = sys.argv[1] if len(sys.argv) > 1 else 'Brive'
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SALIDA = os.path.join(RAIZ, 'preview', 'datos-reales.json')
 SECCIONES = json.load(open(os.path.join(RAIZ, 'scripts', 'secciones.json')))  # mismo mapeo que el Apex
-CORTE = '2026-10-01'
+CORTE = '2026-09-24'
 
 # valor real del picklist -> etapa del panel. "Recepción de Insumos" se muestra como "En proceso".
 # Los valores heredados (Back log, Entrega del Proyecto, Cancelada/o, No aplica, En Proceso) no entran.

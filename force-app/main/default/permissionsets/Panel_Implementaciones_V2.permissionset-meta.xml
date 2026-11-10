@@ -918,6 +918,16 @@
         <field>Delivery_y_Desarrollo__c.Vencimiento_de_Implementaci_n__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Delivery_y_Desarrollo__c.Implementaci_n_Cancelada__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Delivery_y_Desarrollo__c.Num_de_Reprogramaciones__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Panel de implementaciones v2</label>
     <tabSettings>

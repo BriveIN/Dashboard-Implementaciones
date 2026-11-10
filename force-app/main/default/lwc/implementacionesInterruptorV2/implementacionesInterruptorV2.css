@@ -1,0 +1,48 @@
+:host { display: contents; }
+/* mismo aspecto que el interruptor "Cuenta de pruebas" del panel; los colores traen valor por defecto porque el padre no siempre los define */
+.interruptor {
+    width: 100%;
+    font: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0.625rem 0.4rem 0.75rem;
+    border: 1px solid var(--linea-fuerte, #bdcbd3);
+    border-radius: 0.5rem;
+    background: var(--panel, #ffffff);
+    color: var(--tinta2, #344e5e);
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+    min-height: 2.75rem;
+    justify-content: space-between;
+}
+.interruptor:hover { border-color: var(--accion, #14566a); }
+.interruptor:focus-visible { outline: 3px solid var(--foco, #08718d); outline-offset: 2px; }
+.interruptor_texto { display: flex; flex-direction: column; font-size: 0.75rem; line-height: 1.25; }
+.interruptor_estado { font-weight: 700; color: var(--tinta, #18303e); }
+.interruptor_pista {
+    position: relative;
+    flex: none;
+    width: 2.25rem;
+    height: 1.25rem;
+    border-radius: 0.625rem;
+    background: #8a97a0;
+    transition: background 0.15s;
+}
+.interruptor_perilla {
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s;
+}
+.interruptor[aria-checked='true'] { background: var(--accion-fondo, #e8f2f5); border-color: var(--accion, #14566a); }
+.interruptor[aria-checked='true'] .interruptor_pista { background: var(--accion, #14566a); }
+.interruptor[aria-checked='true'] .interruptor_perilla { transform: translateX(1rem); }
+@media (prefers-reduced-motion: reduce) {
+    .interruptor_pista, .interruptor_perilla { transition: none; }
+}

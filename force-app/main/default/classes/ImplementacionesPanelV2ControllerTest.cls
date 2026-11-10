@@ -122,20 +122,45 @@ private class ImplementacionesPanelV2ControllerTest {
     }
 
     @IsTest
-    static void controles_de_cambio_solo_desde_el_corte() {
+    static void controles_de_cambio_sin_corte_fijo() {
         ImplementacionesPanelV2Controller.Cambio nuevo = ImplementacionesPanelV2Controller.cambioDe('2026-08-14 -> 2026-07-24 (2026-10-05 18:12:27Z)');
         System.assertEquals('2026-08-14', nuevo.anterior);
         System.assertEquals('2026-07-24', nuevo.nuevo);
         System.assertEquals(-21, nuevo.dias);
-        System.assertEquals(null, ImplementacionesPanelV2Controller.cambioDe('2025-09-10 -> 2025-10-09 (2025-10-05 11:38:54Z)'), 'antes del corte no cuenta');
+        System.assertNotEquals(null, ImplementacionesPanelV2Controller.cambioDe('2025-09-10 -> 2025-10-09 (2025-10-05 11:38:54Z)'), 'sin corte fijo: el historial completo cuenta');
     }
 
     @IsTest
-    static void las_pausas_se_filtran_por_fecha() {
+    static void las_pausas_no_se_filtran_por_fecha() {
         List<String> lineas = new List<String>{
             '2026-07-14, 2026-10-05 11:38:54Z: paso a Entrega Final (0 h)',
             '2025-01-10, 2025-02-01 08:00:00Z: paso a En Proceso (0 h)'
         };
-        System.assertEquals(1, ImplementacionesPanelV2Controller.desdeCorte(lineas).size());
+        System.assertEquals(2, ImplementacionesPanelV2Controller.desdeCorte(lineas).size(), 'sin corte fijo: no se descarta ninguna línea');
+    }
+
+    @IsTest
+    static void dashboard_trae_implementaciones_con_oportunidad_sin_proyectos_ni_pruebas() {
+        Id implementacion = idDe('Cuenta Implementaciones Prueba', 'Implementación');
+        Id proyecto = idDe('Cuenta Implementaciones Prueba', 'Proyecto');
+        Id deCuentaPrueba = idDe('Patito Sa de CV', 'Implementación');
+
+        Map<Id, ImplementacionesPanelV2Controller.FilaDashboard> m = new Map<Id, ImplementacionesPanelV2Controller.FilaDashboard>();
+        for (ImplementacionesPanelV2Controller.FilaDashboard f : ImplementacionesPanelV2Controller.obtenerDashboard(false, false)) m.put(f.id, f);
+        System.assert(m.containsKey(implementacion));
+        System.assert(!m.containsKey(proyecto), 'el dashboard solo cuenta Implementaciones');
+        System.assert(!m.containsKey(deCuentaPrueba), 'la cuenta de pruebas se oculta por defecto');
+        System.assertEquals(Date.today().addDays(30), m.get(implementacion).cierre, 'el cierre de la oportunidad define el año fiscal de cada reporte');
+        System.assertEquals('Recepción de Insumos', m.get(implementacion).etapa, 'trae la etapa real, sin el mapa del panel');
+        System.assertEquals(20, m.get(implementacion).horasContratadas);
+
+        Set<Id> conPruebas = new Set<Id>();
+        for (ImplementacionesPanelV2Controller.FilaDashboard f : ImplementacionesPanelV2Controller.obtenerDashboard(true, false)) conPruebas.add(f.id);
+        System.assert(conPruebas.contains(deCuentaPrueba));
+
+        // "sistema nuevo": solo lo creado desde el corte (estos datos se crearon hoy, antes del corte de 2026-09-24 o después según la fecha de prueba)
+        Boolean creadoDesdeCorte = Date.today() >= ImplementacionesPanelV2Controller.FECHA_INICIO_DATOS;
+        System.assertEquals(creadoDesdeCorte, !ImplementacionesPanelV2Controller.obtenerDashboard(false, true).isEmpty(),
+            'con el interruptor solo entra lo creado desde el corte');
     }
 }

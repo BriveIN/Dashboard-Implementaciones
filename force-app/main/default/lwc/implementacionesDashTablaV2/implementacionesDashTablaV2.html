@@ -1,0 +1,48 @@
+<template>
+    <section class={claseSeccion} aria-label={titulo}>
+        <div class="cabecera">
+            <h3 class="titulo">{titulo} <span class="cuenta">{tabla.total}</span></h3>
+            <template lwc:if={cerrable}>
+                <lightning-button-icon icon-name="utility:close" alternative-text="Cerrar" title="Cerrar" onclick={cerrar}></lightning-button-icon>
+            </template>
+        </div>
+        <template lwc:if={tabla.hay}>
+            <div class="tabla_scroll" tabindex="0" role="region" aria-label={titulo}>
+                <table class="tabla">
+                    <thead>
+                        <tr>
+                            <template for:each={tabla.encabezados} for:item="c">
+                                <th key={c.campo} class={c.clase} aria-sort={c.aria}>
+                                    <button class="orden" data-campo={c.campo} onclick={ordenar}>
+                                        {c.etiqueta}
+                                        <template lwc:if={c.icono}>
+                                            <lightning-icon class="orden_indicador" icon-name={c.icono} size="xx-small" alternative-text={c.textoOrden}></lightning-icon>
+                                        </template>
+                                    </button>
+                                </th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={tabla.filas} for:item="f">
+                            <tr key={f.id}>
+                                <template for:each={f.celdas} for:item="c">
+                                    <td key={c.campo} class={c.clase}>{c.texto}</td>
+                                </template>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pie">
+                <span class="paginacion">{tabla.textoPaginacion}</span>
+                <template lwc:if={tabla.hayMas}>
+                    <lightning-button label="Mostrar más" onclick={mostrarMas}></lightning-button>
+                </template>
+            </div>
+        </template>
+        <template lwc:else>
+            <p class="vacio">{textoVacio}</p>
+        </template>
+    </section>
+</template>

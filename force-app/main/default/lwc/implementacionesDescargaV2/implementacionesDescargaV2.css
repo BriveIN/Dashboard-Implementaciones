@@ -1,6 +1,9 @@
+:host { display: block; }
 .descarga { position: relative; }
 
 .boton_secundario {
+    width: 100%;
+    justify-content: center;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;

@@ -1,0 +1,9 @@
+<template>
+    <button class="interruptor" type="button" role="switch" aria-checked={ariaActivo} onclick={alternar} title={ayuda}>
+        <span class="interruptor_texto">
+            <span class="interruptor_etiqueta">{etiqueta}</span>
+            <strong class="interruptor_estado">{estado}</strong>
+        </span>
+        <span class="interruptor_pista" aria-hidden="true"><span class="interruptor_perilla"></span></span>
+    </button>
+</template>

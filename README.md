@@ -28,7 +28,7 @@ El script usa las mismas reglas que `ImplementacionesPanelController`. Si cambia
 
 ## Reglas de datos
 
-- **Corte: 1 de octubre de 2026.** Lo aplica Apex (`FECHA_INICIO_DATOS`) en la consulta: entra un registro con alguna fecha de trabajo desde ese día (creación, última etapa, Kickoff acordado o real) o con una actividad fechada desde ese día; y de él solo se devuelven actividades, cambios y tiempos desde ese día. Los filtros de fecha no dejan elegir fechas anteriores.
+- **Corte: 24 de septiembre de 2026.** Lo aplica Apex (`FECHA_INICIO_DATOS`) en la consulta: entra un registro con alguna fecha de trabajo desde ese día (creación, última etapa, Kickoff acordado o real) o con una actividad fechada desde ese día; y de él solo se devuelven actividades, cambios y tiempos desde ese día. Los filtros de fecha no dejan elegir fechas anteriores.
 - **Etapas.** `Recepción de Insumos` se muestra como **En proceso**. No entran los valores heredados (Back log, Entrega del Proyecto, Cancelada/o, No aplica, En Proceso) ni los registros sin tipo.
 - **Producto ≠ solución.** La solución es el picklist `Soluci_n_adquirida__c`; el producto sale de las líneas de producto de la oportunidad del registro (`OpportunityLineItem` → `Product2.Name`), sin repetir. Un registro puede tener varios; la distribución "Por producto" cuenta cuántos registros incluyen cada uno. Si el usuario no ve productos, el panel sigue funcionando sin esa distribución.
 - **Estatus ≠ actividades.** El estatus es `Etapa_del_Proyecto__c`. Las actividades (Task) confirman qué sección se completó; cada una se liga a su sección por el asunto que arma el flow (`{Sección} completado - {Cuenta}`).
@@ -54,7 +54,7 @@ Retirarlo: quitar la asignación del permiso y desplegar `manifest/retirar` con 
 
 ## Reportes en Excel (Implementaciones y Proyectos)
 
-Botón **Descargar reportes** en el encabezado del panel v2 (`implementacionesDescargaV2`), con menú Implementaciones / Proyectos. Cada descarga usa los filtros que el panel tiene en ese momento; el rango de fechas se aplica siempre a `CreatedDate` (inclusivo, hora de Ciudad de México). Sin fechas: desde el corte del panel (1-oct-2026) hasta hoy.
+Botón **Descargar reportes** en el encabezado del panel v2 (`implementacionesDescargaV2`), con menú Implementaciones / Proyectos. Cada descarga usa los filtros que el panel tiene en ese momento; el rango de fechas se aplica siempre a `CreatedDate` (inclusivo, hora de Ciudad de México). Sin fechas: desde el corte del panel (24-sep-2026) hasta hoy.
 
 - Apex: `ReportesImplementacionesController.getReporteImplementaciones` (hoja "Por fecha creación") y `getReporteProyectos` (hoja "Fecha de creación"). Una consulta `USER_MODE` por página de 1,000 registros, paginada por (CreatedDate, Id); el LWC junta las páginas.
 - Excel: `generarXlsxTabla` en `planTrabajoXlsx` (mismo módulo del Plan de trabajo, sin dependencias). Prueba local: `node scripts/probar_reporte_xlsx.mjs <salida.xlsx>` y `node scripts/reporte_desde_json.mjs <respuesta.json> <carpeta>`.
@@ -65,4 +65,17 @@ Botón **Descargar reportes** en el encabezado del panel v2 (`implementacionesDe
 
 - **Umbrales de horas por confirmar** (`UMBRAL_BAJO` 25% y `UMBRAL_CERCANO` 90% en `implementacionesUtil`): no existen en Salesforce.
 - La prueba Apex no se ha corrido en una org (esta etapa fue solo local).
-- Qué fecha define el corte para registros anteriores con actividad nueva (hoy: cualquier fecha de trabajo o actividad desde el 1 de octubre).
+- Qué fecha define el corte para registros anteriores con actividad nueva (hoy: cualquier fecha de trabajo o actividad desde el 24 de septiembre).
+
+## Vista Dashboard (interruptor Panel / Dashboard)
+
+Arriba de **Actualizar** hay un interruptor **Vista: Panel | Dashboard** (`implementacionesCambioVistaV2`). Solo lo ve quien tiene el permiso personalizado `Panel_Implementaciones_Lider`; se asigna con el permission set **Panel de implementaciones (líder)**, junto con `Panel_Implementaciones_V2` (que da acceso a las clases y campos). La vista Panel no cambia.
+
+La vista Dashboard replica el dashboard **Monitoreo Implementaciones tipo** en dos secciones plegables: *Estatus de las implementaciones* (8 indicadores, seguimiento por etapa y póliza, dona de etapas, columnas por fecha acordada, tablas de seguimiento y detalle) y *Horas y satisfacción* (horas contratadas / consumidas / disponibles, satisfacción, horas por cuenta). Cada indicador abre su detalle en una tabla ordenable.
+
+- **Datos propios**: `ImplementacionesPanelV2Controller.obtenerDashboard` (no usa el corte del 24-sep-2026 ni el mapa de etapas del panel). Devuelve Implementaciones creadas desde 2025 con **oportunidad ganada** (los reportes del dashboard traen ese filtro estándar `closedwon`, aunque no se vea en sus filtros). La cuenta de pruebas (Patito) se oculta por defecto; el interruptor de la vista la muestra. El dashboard original sí la cuenta.
+- **Reglas por indicador** (`implementacionesDashboardV2.js`, lógica pura): reporte principal = cierre de la oportunidad desde 2026-01-01 y antes de 2026-12-31 (creadas, cuentas, completadas, canceladas, reprogramaciones, horas, estatus y detalle); no iniciadas = etapa *No iniciada* o *Back log*; agendadas = *Kick Off*, *En Proceso* o *En Pausa* con fecha acordada; en proceso = etapa *En Proceso*; completadas = etapa *Entrega del Proyecto*; por fecha acordada = desde 2026-01-01; satisfacción = promedio de las mayores a 0.01; horas por cuenta = sin filtro de año.
+- Una diferencia con el dashboard: su tarjeta "Implementaciones creadas (Módulos)" muestra las **cuentas distintas** (fórmula `ACCOUNT_ID:UNIQUE`); aquí "Implementaciones creadas" cuenta registros y "Cuentas con implementaciones" cuenta las cuentas.
+- Despliegue: además de lo de siempre, `customPermissions/Panel_Implementaciones_Lider` y `permissionsets/Panel_Implementaciones_Lider`; `Panel_Implementaciones_V2` ahora da lectura a `Implementaci_n_Cancelada__c` y `Num_de_Reprogramaciones__c`.
+- **Filtros en el Dashboard.** Se quitan los de fecha (Rango según, Mes, Desde, Hasta), Estatus, Más filtros (producto, controles de cambio, consumo, actividades) y el interruptor de cuenta de pruebas dentro del panel de filtros: cada reporte trae su propio periodo. Quedan Responsable, Asociado, Cuenta comercial, Solución adquirida y Propietario del programa, que filtran las filas del Dashboard (las opciones salen de esas filas). "Quitar filtros" ahí solo limpia esos cinco.
+- **Interruptor Sistema nuevo (Todo | Desde 24/09).** Está en las dos vistas y el corte es el mismo (24 de septiembre de 2026, `FECHA_INICIO_DATOS` en Apex y `CORTE` en `implementacionesUtilV2`). Encendido, el **Panel** se queda con lo creado desde ese día (se aplica en pantalla sobre lo ya cargado, y la descarga a Excel respeta lo mismo) y el **Dashboard** pide `obtenerDashboard(incluirPruebas, soloSistemaNuevo)`, que agrega `CreatedDate >= FECHA_INICIO_DATOS`. Apagado, el Panel trae lo que tenga alguna fecha de trabajo desde el corte y el Dashboard aplica las reglas completas de cada reporte.

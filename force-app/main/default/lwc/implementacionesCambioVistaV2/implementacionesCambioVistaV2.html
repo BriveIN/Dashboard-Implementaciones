@@ -1,0 +1,10 @@
+<template>
+    <button lwc:if={visible} class="interruptor" role="switch" aria-checked={ariaActivo} onclick={cambiar}
+        title="Cambiar entre el panel y el dashboard">
+        <span class="interruptor_texto">
+            <span class="interruptor_etiqueta">Vista</span>
+            <strong class="interruptor_estado">{textoVista}</strong>
+        </span>
+        <span class="interruptor_pista" aria-hidden="true"><span class="interruptor_perilla"></span></span>
+    </button>
+</template>

@@ -14,7 +14,7 @@ Un solo panel para entender qué ocurre dentro de cada implementación y proyect
 
 ## Reglas confirmadas
 
-- Corte de información: 1 de octubre de 2026, parte de la consulta (no un filtro visual).
+- Corte de información: 24 de septiembre de 2026, parte de la consulta (no un filtro visual).
 - Implementaciones y Proyectos son el mismo objeto (`Delivery_y_Desarrollo__c`), separados por `Tipo_de_Ejecucion__c`.
 - Estatus (etapa actual) no es lo mismo que actividades completadas. `Recepción de Insumos` se muestra como "En proceso"; los valores heredados no entran. "En pausa" es una condición aparte.
 - Horas: se toman de los campos que ya llenan los flows; no se recalculan.
@@ -23,7 +23,7 @@ Un solo panel para entender qué ocurre dentro de cada implementación y proyect
 ## Abierto, por confirmar
 
 - Umbrales de consumo de horas (bajo < 25%, próximo a agotar ≥ 90%): no están definidos en Salesforce.
-- Registros anteriores al corte con actividad nueva: hoy entran si tienen alguna fecha de trabajo o actividad desde el 1 de octubre.
+- Registros anteriores al corte con actividad nueva: hoy entran si tienen alguna fecha de trabajo o actividad desde el 24 de septiembre.
 - 136 registros no tienen `Tipo_de_Ejecucion__c`: no se pueden clasificar y no entran.
 
 ## Brand Commitments

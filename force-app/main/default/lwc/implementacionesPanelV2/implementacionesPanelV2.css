@@ -83,9 +83,11 @@ button:disabled { cursor: not-allowed; }
 .identidad_separador { width: 1px; align-self: stretch; background: var(--linea-fuerte); flex: none; }
 .titulo { font-size: clamp(1.75rem, 3.2vw, 2.25rem); font-weight: 700; line-height: 1.12; margin: 0; letter-spacing: -0.035em; color: #152f3e; }
 .subtitulo { color: var(--tenue); font-size: 0.8125rem; font-variant-numeric: tabular-nums; margin: 0.25rem 0 0; }
-.acciones { display: flex; align-items: center; gap: 0.75rem; }
+.acciones { display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem; }
+.acciones_botones { display: grid; grid-template-columns: repeat(2, 12.5rem); align-items: stretch; gap: 0.75rem; }
 
 .boton_secundario, .boton_primario {
+    width: 100%;
     min-height: 2.75rem;
     padding: 0.5rem 1.125rem;
     border: 1px solid #a9a9a9;
@@ -831,6 +833,8 @@ a { color: var(--accion); text-decoration-color: var(--marca); text-decoration-t
 @media (max-width: 40rem) {
     .logo { height: 1.875rem; }
     .acciones { gap: 0.5rem; }
+    .acciones, .acciones_botones { width: 100%; }
+    .acciones_botones { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
     .boton_secundario, .boton_primario { padding: 0.375rem 0.75rem; font-size: 0.8125rem; min-height: 2.5rem; }
 }
 @media (max-width: 30rem) {
@@ -838,3 +842,70 @@ a { color: var(--accion); text-decoration-color: var(--marca); text-decoration-t
     .filtros_resto, .filtros_periodo { grid-template-columns: 1fr; }
     .camino { grid-template-columns: 1fr; }
 }
+
+/* ---------- vista Dashboard ---------- */
+.dash_cabecera { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+/* secciones fijas (sin plegar): el título queda como encabezado con su línea inferior */
+.dash_seccion > .bloque_encabezado { border-bottom: 1px solid var(--linea); cursor: default; }
+.dash_seccion > .bloque_encabezado:hover { background: transparent; }
+.dash_nota { max-width: 46rem; margin: 0.25rem 0 0; }
+/* 8 indicadores de estatus = 2 filas de 4; los 4 de horas y satisfacción = 1 fila */
+.dash_kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 62rem) { .dash_kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 36rem) { .dash_kpis { grid-template-columns: minmax(0, 1fr); } }
+.dash_rejilla { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1rem; margin: 1rem 0; }
+.dash_rejilla > .panel { min-width: 0; }
+@media (max-width: 62rem) { .dash_rejilla { grid-template-columns: minmax(0, 1fr); } }
+.dash_bloque { margin: 1rem 0; }
+.dash_leyenda { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; font-size: 0.75rem; color: var(--tinta2); }
+.dash_leyenda li { display: inline-flex; align-items: center; gap: 0.375rem; }
+.dash_marca { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 0.1875rem; flex: none; }
+.dash_barras { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.dash_barra_fila { display: grid; grid-template-columns: minmax(6rem, 12rem) minmax(0, 1fr) 2.5rem; align-items: center; gap: 0.75rem; font-size: 0.8125rem; }
+.dash_barra_nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tinta); }
+.dash_barra_pista { display: flex; height: 1.5rem; background: var(--pista); border-radius: 0.25rem; overflow: hidden; }
+.dash_seg { display: inline-flex; align-items: center; justify-content: center; min-width: 0; color: #fff; text-shadow: 0 0 2px rgb(0 0 0 / 55%); font-size: 0.6875rem; font-weight: 700; font-variant-numeric: tabular-nums; overflow: hidden; }
+.dash_barra_total { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--tinta); }
+.dash_dona_caja { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.dash_dona { position: relative; width: 9rem; height: 9rem; border-radius: 50%; flex: none; }
+.dash_dona_centro { position: absolute; inset: 1.75rem; border-radius: 50%; background: var(--panel); display: grid; place-content: center; text-align: center; line-height: 1.1; }
+.dash_dona_centro strong { font-size: 1.5rem; letter-spacing: -0.03em; color: var(--tinta); }
+.dash_dona_centro small { font-size: 0.6875rem; color: var(--tenue); }
+.dash_dona_leyenda { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.375rem; font-size: 0.8125rem; flex: 1; min-width: 10rem; }
+.dash_dona_leyenda li { display: flex; align-items: center; gap: 0.5rem; }
+.dash_dona_tipo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tinta); }
+.dash_dona_n { font-variant-numeric: tabular-nums; color: var(--tenue); }
+.dash_grafica { overflow-x: auto; padding-bottom: 0.25rem; }
+.dash_zona { position: relative; height: 9rem; }
+.dash_pilas, .dash_pie { list-style: none; margin: 0; padding: 0; display: flex; gap: 0.5rem; }
+.dash_pilas { height: 100%; align-items: stretch; }
+.dash_pila_col, .dash_pie_col { flex: 1 1 0; min-width: 0; }
+.dash_pila_col { display: flex; }
+.dash_columna_pila { display: flex; flex-direction: column-reverse; justify-content: flex-start; width: 100%; height: 100%; background: var(--pista); border-radius: 0.25rem; overflow: hidden; }
+.dash_col_seg { display: block; width: 100%; flex: none; }
+.dash_pie { margin-top: 0.375rem; }
+.dash_pie_col { display: flex; flex-direction: column; align-items: center; gap: 0.0625rem; font-size: 0.6875rem; color: var(--tenue); text-align: center; }
+.dash_columna_total { font-weight: 700; color: var(--tinta); font-variant-numeric: tabular-nums; }
+.dash_columna_mes { color: var(--tinta2); font-weight: 700; }
+.dash_columna_part { font-variant-numeric: tabular-nums; }
+/* línea de cuentas: el SVG se estira al área de las columnas y los puntos son HTML para que no se deformen */
+.dash_linea { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.dash_linea_trazo { fill: none; stroke: #1b2f3a; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.dash_punto { position: absolute; width: 0.5rem; height: 0.5rem; margin: -0.25rem 0 0 -0.25rem; border-radius: 50%; background: #fff; border: 2px solid #1b2f3a; pointer-events: none; }
+.dash_marca_linea { display: inline-block; width: 1rem; height: 0; border-top: 2px solid #1b2f3a; flex: none; }
+/* horas contratadas vs consumidas por cuenta */
+.dash_horas_contratadas { background: var(--info-claro); }
+.dash_horas_consumidas { background: var(--ok); }
+.dash_horas_fila { display: grid; grid-template-columns: minmax(6rem, 12rem) minmax(0, 1fr); align-items: center; gap: 0.75rem; font-size: 0.8125rem; }
+.dash_horas_barras { display: grid; gap: 0.1875rem; }
+.dash_horas_barra { display: flex; align-items: center; gap: 0.5rem; height: 0.875rem; }
+.dash_horas_relleno { display: block; height: 100%; min-width: 1px; border-radius: 0.125rem; }
+.dash_horas_valor { font-size: 0.6875rem; font-variant-numeric: tabular-nums; color: var(--tinta2); white-space: nowrap; }
+/* satisfacción: la escala va de 0 a 100 con cortes en 33 y 67, igual que el medidor del dashboard */
+.dash_medidor_valor { margin: 0.5rem 0; font-size: 2.25rem; font-weight: 700; letter-spacing: -0.04em; color: var(--tinta); font-variant-numeric: tabular-nums; }
+.dash_medidor { height: 0.875rem; background: var(--pista); border-radius: 999px; overflow: hidden; }
+.dash_medidor_relleno { display: block; height: 100%; border-radius: 999px; }
+.dash_medidor_ok { background: var(--ok); }
+.dash_medidor_precaucion { background: var(--precaucion); }
+.dash_medidor_critico { background: var(--critico); }
+.dash_medidor_escala { display: flex; justify-content: space-between; margin-top: 0.25rem; font-size: 0.6875rem; color: var(--tenue); font-variant-numeric: tabular-nums; }

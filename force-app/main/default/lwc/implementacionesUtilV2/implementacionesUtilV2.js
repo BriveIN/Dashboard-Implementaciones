@@ -5,7 +5,7 @@
  */
 
 // corte de información: lo aplica Apex en la consulta; aquí solo se usa para avisar y limitar las fechas elegibles
-export const CORTE = '2026-10-01';
+export const CORTE = '2026-09-24';
 
 // umbrales del consumo de horas. POR CONFIRMAR con el equipo (ver PRODUCT.md): no existen en Salesforce.
 export const UMBRAL_BAJO = 0.25; // menos de este avance = bajo consumo

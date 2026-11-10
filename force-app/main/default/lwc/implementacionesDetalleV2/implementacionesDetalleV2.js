@@ -189,7 +189,7 @@ export default class ImplementacionesDetalle extends LightningElement {
             resumen: grupos.map((g) => ({ clave: g.nombre, titulo: g.titulo, texto: g.resumen, clase: g.conActividad ? 'chip chip_estado_ok' : 'chip chip_estado_neutro' })),
             sueltas,
             haySueltas: sueltas.length > 0,
-            conteo: `${total} ${total === 1 ? 'actividad' : 'actividades'} desde el 1 de octubre · ${total - sueltas.length} en las secciones de abajo${sueltas.length ? ` · ${sueltas.length} sin sección en el avance` : ''}`,
+            conteo: `${total} ${total === 1 ? 'actividad' : 'actividades'} desde el 24 de septiembre · ${total - sueltas.length} en las secciones de abajo${sueltas.length ? ` · ${sueltas.length} sin sección en el avance` : ''}`,
             sinSeleccionar: sinSeleccionar.map((s) => ({ clave: s.clave, nombre: s.nombre })),
             haySinSeleccionar: sinSeleccionar.length > 0,
             solucion: r.solucion || 'esta solución'
@@ -207,7 +207,7 @@ export default class ImplementacionesDetalle extends LightningElement {
             estado = 'Completa · esta sección no genera actividad';
             clase = 'neutro';
         } else if (s.seleccionada && s.completa) {
-            estado = 'Completa · sin actividad desde el 1 oct';
+            estado = 'Completa · sin actividad desde el 24 sep';
             clase = 'alerta';
         } else if (hayActividad) {
             estado = 'Con actividad';

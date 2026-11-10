@@ -1,6 +1,7 @@
 import { LightningElement } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
 import obtenerImplementaciones from "@salesforce/apex/ImplementacionesPanelV2Controller.obtenerImplementaciones";
+import obtenerDashboard from "@salesforce/apex/ImplementacionesPanelV2Controller.obtenerDashboard";
 import LOGO_BRIVE from "@salesforce/resourceUrl/QSA_BriveLogo";
 import {
   CORTE,
@@ -18,11 +19,12 @@ import {
   fmtFecha,
   leerResumen
 } from "c/implementacionesUtilV2";
+import { armarDashboard, empiezaAscendente, ORDEN_INICIAL, PASO_FILAS } from "c/implementacionesDashboardV2";
 
 /*
  * Panel de implementaciones y proyectos (Delivery_y_Desarrollo__c). Solo lectura.
  *   Vista general | Implementaciones | Proyectos  →  indicador → registro → etapa → sección → actividad → resumen → horas / cambios
- * El corte del 1 de octubre de 2026 lo aplica Apex en la consulta; aquí no existe forma de quitarlo.
+ * El corte del 24 de septiembre de 2026 lo aplica Apex en la consulta; aquí no existe forma de quitarlo.
  * Estatus ≠ actividades: el estatus es la etapa actual del registro; las actividades confirman qué secciones se completaron.
  * Las horas se muestran tal como las calcula Salesforce (Horas_Contratadas__c, Horas__c, Horas_Disponibles__c).
  */
@@ -38,6 +40,10 @@ const SECCIONES_INICIALES = {
   "tabla-imp": true,
   "tabla-pro": true
 };
+// filtros que siguen disponibles en la vista Dashboard (los de fecha, estatus, horas y actividades solo existen en el panel)
+const FILTROS_DASHBOARD = ["cuenta", "responsable", "asociado", "solucion", "area"];
+// arranque del sistema nuevo: 00:00 hora de México del día del corte (Apex usa el mismo instante)
+const INICIO_SISTEMA_NUEVO = new Date(`${CORTE}T06:00:00Z`);
 const POR_PAGINA = 12;
 const ACTIVIDADES_POR_PAGINA = 8;
 const MAX_FILAS_LISTA = 150; // filas que se pintan de una lista larga; el resto se alcanza con el buscador
@@ -188,6 +194,18 @@ function pasaFiltros(r, f, sinEtapa) {
   return true;
 }
 
+// filtros de la vista Dashboard: los mismos controles del panel, sobre las filas del dashboard
+function pasaFiltrosDashboard(r, f) {
+  if (f.cuenta && r.empresa !== f.cuenta) return false;
+  if (f.responsable === SIN_RESPONSABLE) {
+    if (r.responsable) return false;
+  } else if (f.responsable && r.responsable !== f.responsable) return false;
+  if (f.asociado && !(r.asociados || []).includes(f.asociado)) return false;
+  if (f.solucion && r.solucion !== f.solucion) return false;
+  if (f.area && r.area !== f.area) return false;
+  return true;
+}
+
 // ordena por una columna; los vacíos van siempre al final
 function ordenar(lista, orden) {
   const col = COLUMNAS.find((c) => c.campo === orden.campo) || COLUMNAS[0];
@@ -207,6 +225,8 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
   logoBrive = LOGO_BRIVE;
 
   registros = [];
+  // lo que devolvió Apex; "registros" es esto, o solo lo creado desde el sistema nuevo si el interruptor está encendido
+  registrosCargados = [];
   cargando = false;
   error;
   actualizadoEn;
@@ -228,6 +248,19 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
     pro: { busqueda: "", orden: { campo: "etapaOrden", dir: 1 }, limite: POR_PAGINA, abiertas: {}, cerrando: {} }
   };
   vm = { vacio: true };
+
+  // vista Dashboard (solo con el permiso Panel_Implementaciones_Lider): sus propios datos y cálculo, sin tocar los del panel
+  vistaDashboard = false;
+  filasDashboard = [];
+  cargandoDashboard = false;
+  dashCargado = false;
+  errorDashboard;
+  dash = null;
+  ordenDash = { ...ORDEN_INICIAL };
+  limiteDash = { det: PASO_FILAS, nin: PASO_FILAS, age: PASO_FILAS, pro: PASO_FILAS, drill: PASO_FILAS };
+  kpiDash = null;
+  // solo lo creado desde el arranque del sistema nuevo (CORTE); en false, las reglas completas de cada reporte
+  soloSistemaNuevo = false;
   origenDrill = null;
   lugarDrill = "estatus";
   temporizadores = {};
@@ -326,7 +359,8 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
     this.error = undefined;
     try {
       const datos = await obtenerImplementaciones({ incluirPruebas: this.incluirPruebas });
-      this.registros = (datos || []).map(enriquecer);
+      this.registrosCargados = (datos || []).map(enriquecer);
+      this.aplicarSistemaNuevo();
       this.actualizadoEn = new Date();
       this.recalcular();
     } catch (e) {
@@ -337,7 +371,8 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
   }
 
   actualizar() {
-    this.cargar();
+    if (this.vistaDashboard) this.cargarDashboard();
+    else this.cargar();
   }
 
   // al actualizar, lo que ya se ve se queda en pantalla hasta que lleguen los datos nuevos (no se pierde el lugar)
@@ -349,12 +384,16 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
     return this.cargando && this.registros.length === 0;
   }
 
+  get ocupado() {
+    return this.vistaDashboard ? this.cargandoDashboard : this.cargando;
+  }
+
   get ariaCargando() {
-    return String(this.cargando);
+    return String(this.ocupado);
   }
 
   get textoActualizar() {
-    return this.cargando ? "Actualizando…" : "Actualizar";
+    return this.ocupado ? "Actualizando…" : "Actualizar";
   }
 
   get sinDatos() {
@@ -363,13 +402,14 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
 
   get estadoActualizacion() {
     if (!this.actualizadoEn) return "Cargando…";
-    if (this.cargando) return "Actualizando…";
+    if (this.cargando || this.cargandoDashboard) return "Actualizando…";
     const hora = this.actualizadoEn.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
-    return `Actualizado a las ${hora} · registros desde el 1 de octubre de 2026`;
+    if (this.vistaDashboard) return `Actualizado a las ${hora} · reglas de los reportes del dashboard`;
+    return `Actualizado a las ${hora} · ${this.soloSistemaNuevo ? "registros desde el 24 de septiembre de 2026" : "todos los registros"}`;
   }
 
   get avisoCorte() {
-    return "solo se consideran registros con fechas o actividades desde el 1 de octubre de 2026. Los anteriores no intervienen en ninguna cifra.";
+    return "solo se consideran registros creados desde el 24 de septiembre de 2026 (sistema nuevo).";
   }
 
   get ariaPruebas() {
@@ -387,13 +427,137 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
     } catch (e) {
       // la preferencia solo dura esta sesión
     }
-    this.cargar();
+    // la otra vista conserva sus datos viejos: se recarga al volver a ella
+    this.otraVistaObsoleta = true;
+    this.actualizar();
+  }
+
+  // ---------- vista Dashboard ----------
+
+  otraVistaObsoleta = false;
+
+  cambiarVistaPrincipal(e) {
+    this.vistaDashboard = !!e.detail.dashboard;
+    this.kpiDash = null;
+    const recargar = this.otraVistaObsoleta;
+    this.otraVistaObsoleta = false;
+    if (this.vistaDashboard) {
+      if (!this.dashCargado || recargar) this.cargarDashboard();
+      else this.recalcularDashboard();
+    } else if (recargar) {
+      this.cargar();
+    }
+  }
+
+  async cargarDashboard() {
+    this.cargandoDashboard = true;
+    this.errorDashboard = undefined;
+    try {
+      const datos = await obtenerDashboard({ incluirPruebas: this.incluirPruebas, soloSistemaNuevo: this.soloSistemaNuevo });
+      this.filasDashboard = (datos || []).map((f) => ({ ...f, area: AREA_POR_PROPIETARIO[f.centro] || SIN_AREA }));
+      this.dashCargado = true;
+      this.actualizadoEn = new Date();
+      this.limiteDash = { det: PASO_FILAS, nin: PASO_FILAS, age: PASO_FILAS, pro: PASO_FILAS, drill: PASO_FILAS };
+      this.recalcularDashboard();
+    } catch (e) {
+      this.errorDashboard = mensajeError(e);
+    } finally {
+      this.cargandoDashboard = false;
+    }
+  }
+
+  // se calcula una vez por cambio (datos, orden, filas visibles o indicador abierto), no en cada lectura de la plantilla
+  recalcularDashboard() {
+    const f = this.filtros;
+    const filas = this.filasDashboard.filter((r) => pasaFiltrosDashboard(r, f));
+    this.dash = armarDashboard(filas, { orden: this.ordenDash, limite: this.limiteDash, abierto: this.kpiDash });
+  }
+
+  get textoSistemaNuevo() {
+    return this.soloSistemaNuevo ? "Desde 24/09" : "Todo";
+  }
+
+  // el interruptor vale para las dos vistas: el Panel lo aplica al instante sobre lo ya cargado; el Dashboard pide sus datos de nuevo
+  async alternarSistemaNuevo(e) {
+    this.soloSistemaNuevo = !!e.detail.activo;
+    this.kpiDash = null;
+    this.origenDrill = null;
+    this.reiniciarTablas();
+    this.aplicarSistemaNuevo();
+    this.recalcular();
+    this.dashCargado = false;
+    if (this.vistaDashboard) await this.cargarDashboard();
+  }
+
+  aplicarSistemaNuevo() {
+    this.registros = this.soloSistemaNuevo
+      ? this.registrosCargados.filter((r) => r.creadoEn && new Date(r.creadoEn) >= INICIO_SISTEMA_NUEVO)
+      : this.registrosCargados;
+  }
+
+  get noEsVistaDashboard() {
+    return !this.vistaDashboard;
+  }
+
+  get textoBannerFiltros() {
+    return "En la vista Dashboard cada indicador usa el periodo y las reglas de su reporte; aquí solo se filtra por responsable, asociado, cuenta, solución y propietario del programa.";
+  }
+
+  get esVistaDashboard() {
+    return this.vistaDashboard;
+  }
+
+  get hayDash() {
+    return this.dashCargado && !!this.dash;
+  }
+
+  get cargandoInicialDash() {
+    return this.cargandoDashboard && !this.dashCargado;
+  }
+
+  get sinDatosDash() {
+    return this.dashCargado && !this.cargandoDashboard && this.filasDashboard.length === 0;
+  }
+
+  get hayDrillEstatus() {
+    return !!this.dash && !!this.dash.drill && !this.dash.drill.deHoras;
+  }
+
+  get hayDrillHoras() {
+    return !!this.dash && !!this.dash.drill && this.dash.drill.deHoras;
+  }
+
+  seleccionarKpiDash(e) {
+    const id = e.currentTarget.dataset.id;
+    this.kpiDash = this.kpiDash === id ? null : id;
+    this.ordenDash = { ...this.ordenDash, drill: ORDEN_INICIAL.drill };
+    this.limiteDash = { ...this.limiteDash, drill: PASO_FILAS };
+    this.recalcularDashboard();
+  }
+
+  cerrarKpiDash() {
+    this.kpiDash = null;
+    this.recalcularDashboard();
+  }
+
+  ordenarDash(e) {
+    const { tabla, campo } = e.detail;
+    const actual = this.ordenDash[tabla];
+    const asc = actual.campo === campo ? !actual.asc : empiezaAscendente(campo);
+    this.ordenDash = { ...this.ordenDash, [tabla]: { campo, asc } };
+    this.recalcularDashboard();
+  }
+
+  mostrarMasDash(e) {
+    const { tabla } = e.detail;
+    this.limiteDash = { ...this.limiteDash, [tabla]: this.limiteDash[tabla] + PASO_FILAS };
+    this.recalcularDashboard();
   }
 
   // ---------- filtros ----------
 
   get fechaMinima() {
-    return CORTE;
+    return null;
   }
 
   get opcionesCampoFecha() {
@@ -417,28 +581,28 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
   }
 
   get opcionesArea() {
-    const hay = new Set(this.registrosDeLaVista.map((r) => r.area));
+    const hay = new Set(this.fuenteOpciones.map((r) => r.area));
     return [{ label: "Todos", value: "" }, ...[...AREAS, SIN_AREA].filter((a) => a !== SIN_AREA || hay.has(a)).map((a) => ({ label: a, value: a }))];
   }
 
   // meses que existen en los datos, según la fecha elegida en "Rango según"
   get opcionesMes() {
     const campo = this.filtros.campoFecha;
-    const claves = new Set(this.registrosDeLaVista.map((r) => String(r[campo] || "").slice(0, 7)).filter((m) => m >= CORTE.slice(0, 7)));
+    const claves = new Set(this.registrosDeLaVista.map((r) => String(r[campo] || "").slice(0, 7)).filter((m) => m));
     if (this.filtros.mes) claves.add(this.filtros.mes);
     return [{ label: "Todos", value: "" }, ...[...claves].sort().map((m) => ({ label: etiquetaMes(m), value: m }))];
   }
 
   get opcionesCuenta() {
-    return opciones(unicos(this.registrosDeLaVista.map((r) => r.empresa)), "Todas");
+    return opciones(unicos(this.fuenteOpciones.map((r) => r.empresa)), "Todas");
   }
 
   get opcionesResponsable() {
-    return [...opciones(unicos(this.registrosDeLaVista.map((r) => r.responsable)), "Todos"), { label: "Sin responsable", value: SIN_RESPONSABLE }];
+    return [...opciones(unicos(this.fuenteOpciones.map((r) => r.responsable)), "Todos"), { label: "Sin responsable", value: SIN_RESPONSABLE }];
   }
 
   get opcionesAsociado() {
-    return opciones(unicos(this.registrosDeLaVista.flatMap((r) => r.asociados || [])), "Todos");
+    return opciones(unicos(this.fuenteOpciones.flatMap((r) => r.asociados || [])), "Todos");
   }
 
   get opcionesProducto() {
@@ -446,7 +610,12 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
   }
 
   get opcionesSolucion() {
-    return opciones(unicos(this.registrosDeLaVista.map((r) => r.solucion)), "Todas");
+    return opciones(unicos(this.fuenteOpciones.map((r) => r.solucion)), "Todas");
+  }
+
+  // de dónde salen las opciones de los combos: las filas del dashboard o los registros del panel
+  get fuenteOpciones() {
+    return this.vistaDashboard ? this.filasDashboard : this.registrosDeLaVista;
   }
 
   get registrosDeLaVista() {
@@ -485,11 +654,12 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
       const campo = CAMPOS_FECHA.find((c) => c.value === f.campoFecha).label.toLowerCase();
       agrega("fechas", `${campo}: ${f.desde ? fmtFecha(f.desde) : "…"} – ${f.hasta ? fmtFecha(f.hasta) : "…"}`);
     }
-    return chips;
+    return this.vistaDashboard ? chips.filter((c) => FILTROS_DASHBOARD.includes(c.campo)) : chips;
   }
 
   get textoPeriodo() {
-    return "Desde 1 oct 2026";
+    if (this.vistaDashboard) return this.soloSistemaNuevo ? "Creadas desde el 24 sep 2026 (sistema nuevo)" : "Reglas de cada reporte del dashboard";
+    return this.soloSistemaNuevo ? "Creadas desde el 24 sep 2026 (sistema nuevo)" : "Todo el historial";
   }
 
   cambiarFiltro(e) {
@@ -502,9 +672,7 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
 
   cambiarFecha(e) {
     const { campo } = e.currentTarget.dataset;
-    let valor = e.detail.value || "";
-    // el corte es una restricción de los datos: ninguna fecha anterior se puede elegir
-    if (valor && valor < CORTE) valor = CORTE;
+    const valor = e.detail.value || "";
     this.filtros = { ...this.filtros, [campo]: valor };
     this.origenDrill = null;
     this.reiniciarTablas();
@@ -521,6 +689,12 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
   }
 
   limpiarFiltros() {
+    if (this.vistaDashboard) {
+      // en el Dashboard solo se quitan los filtros que ahí existen; los del panel se conservan
+      this.filtros = { ...this.filtros, ...Object.fromEntries(FILTROS_DASHBOARD.map((c) => [c, ""])) };
+      this.recalcular();
+      return;
+    }
     this.filtros = { ...FILTROS_VACIOS };
     this.origenDrill = null;
     this.grupoActividades = "";
@@ -639,6 +813,7 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
   // ---------- cálculo ----------
 
   recalcular() {
+    if (this.dashCargado) this.recalcularDashboard();
     const tipoVista = VISTAS.find((v) => v.valor === this.vista).tipo;
     const f = this.filtros;
     const deTipo = (r) => !tipoVista || r.tipo === tipoVista;
@@ -730,7 +905,7 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
     // la primera vista es ejecutiva: las horas se leen por registro (tabla y detalle), no en sumas globales
     return [
       k("total", this.nombreVista, fmtEntero(filas.length), this.descripcionVista, { icono: "utility:layers" }),
-      k("actividades", "Actividades generadas", fmtEntero(suma(filas, (r) => r.nAct)), "Secciones completadas, desde el 1 de octubre", { icono: "utility:task" }),
+      k("actividades", "Actividades generadas", fmtEntero(suma(filas, (r) => r.nAct)), "Secciones completadas, desde el 24 de septiembre", { icono: "utility:task" }),
       k("conCambios", `${this.nombreVista} con controles de cambio`, fmtEntero(conCambios), "Toca para ver cuáles", {
         icono: "utility:event",
         filtro: "cambios",
@@ -1368,7 +1543,7 @@ export default class ImplementacionesPanel extends NavigationMixin(LightningElem
       solucion: f.solucion,
       incluirPruebas: this.incluirPruebas
     };
-    if (f.producto || f.cambios || f.consumo || f.grupo || f.area) {
+    if (f.producto || f.cambios || f.consumo || f.grupo || f.area || this.soloSistemaNuevo) {
       const sinFecha = { ...f, desde: "", hasta: "", mes: "" };
       filtros.ids = this.registros.filter((r) => pasaFiltros(r, sinFecha, false)).map((r) => r.id);
     }

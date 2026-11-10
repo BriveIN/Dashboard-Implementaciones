@@ -10,8 +10,16 @@
                 </div>
             </div>
             <div class="acciones">
-                <c-implementaciones-descarga-v2 filtros-reporte={filtrosReporte}></c-implementaciones-descarga-v2>
-                <button class="boton_primario" onclick={actualizar} disabled={cargando} aria-busy={ariaCargando}>{textoActualizar}</button>
+                <div class="acciones_botones">
+                    <c-implementaciones-cambio-vista-v2 es-dashboard={esVistaDashboard} oncambio={cambiarVistaPrincipal}></c-implementaciones-cambio-vista-v2>
+                    <c-implementaciones-interruptor-v2 etiqueta="Sistema nuevo" estado={textoSistemaNuevo} activo={soloSistemaNuevo}
+                        ayuda="Solo lo creado desde el arranque del sistema nuevo (24 de septiembre de 2026)"
+                        onalternar={alternarSistemaNuevo}></c-implementaciones-interruptor-v2>
+                </div>
+                <div class="acciones_botones">
+                    <c-implementaciones-descarga-v2 filtros-reporte={filtrosReporte}></c-implementaciones-descarga-v2>
+                    <button class="boton_primario" onclick={actualizar} disabled={ocupado} aria-busy={ariaCargando}>{textoActualizar}</button>
+                </div>
             </div>
         </header>
 
@@ -52,16 +60,22 @@
             <template lwc:if={filtrosAbiertos}>
                 <div class="filtros_panel" id="panel-filtros">
                     <div class="fila_corte">
-                        <p class="aviso_corte"><strong>Corte de información:</strong> {avisoCorte}</p>
-                        <button class="interruptor" role="switch" aria-checked={ariaPruebas} onclick={alternarPruebas}
-                            title="Mostrar u ocultar la cuenta de pruebas (Patito)">
-                            <span class="interruptor_texto">
-                                <span>Cuenta de pruebas</span>
-                                <strong>{textoPruebas}</strong>
-                            </span>
-                            <span class="interruptor_pista" aria-hidden="true"><span class="interruptor_perilla"></span></span>
-                        </button>
+                        <template lwc:if={esVistaDashboard}>
+                            <p class="aviso_corte">{textoBannerFiltros}</p>
+                        </template>
+                        <template lwc:else>
+                            <p class="aviso_corte" lwc:if={soloSistemaNuevo}><strong>Corte de información:</strong> {avisoCorte}</p>
+                            <button class="interruptor" role="switch" aria-checked={ariaPruebas} onclick={alternarPruebas}
+                                title="Mostrar u ocultar la cuenta de pruebas (Patito)">
+                                <span class="interruptor_texto">
+                                    <span>Cuenta de pruebas</span>
+                                    <strong>{textoPruebas}</strong>
+                                </span>
+                                <span class="interruptor_pista" aria-hidden="true"><span class="interruptor_perilla"></span></span>
+                            </button>
+                        </template>
                     </div>
+                    <template lwc:if={noEsVistaDashboard}>
                     <div class="filtros_periodo">
                         <lightning-combobox label="Rango según" value={filtros.campoFecha} options={opcionesCampoFecha}
                             data-campo="campoFecha" onchange={cambiarFiltro}></lightning-combobox>
@@ -72,9 +86,12 @@
                         <lightning-input type="date" label="Hasta" value={filtros.hasta} min={fechaMinima}
                             data-campo="hasta" onchange={cambiarFecha}></lightning-input>
                     </div>
+                    </template>
                     <div class="filtros_resto">
-                        <lightning-combobox label="Estatus" value={filtros.etapa} options={opcionesEtapa}
-                            data-campo="etapa" onchange={cambiarFiltro}></lightning-combobox>
+                        <template lwc:if={noEsVistaDashboard}>
+                            <lightning-combobox label="Estatus" value={filtros.etapa} options={opcionesEtapa}
+                                data-campo="etapa" onchange={cambiarFiltro}></lightning-combobox>
+                        </template>
                         <lightning-combobox label="Responsable" value={filtros.responsable} options={opcionesResponsable}
                             data-campo="responsable" onchange={cambiarFiltro}></lightning-combobox>
                         <lightning-combobox label="Asociado" value={filtros.asociado} options={opcionesAsociado}
@@ -86,6 +103,7 @@
                         <lightning-combobox label="Propietario del programa" value={filtros.area} options={opcionesArea}
                             data-campo="area" onchange={cambiarFiltro}></lightning-combobox>
                     </div>
+                    <template lwc:if={noEsVistaDashboard}>
                     <div class="filtros_mas">
                         <button class="boton_texto" aria-expanded={ariaMasFiltros} onclick={alternarMasFiltros}>
                             {textoMasFiltros}
@@ -104,6 +122,7 @@
                             </div>
                         </template>
                     </div>
+                    </template>
                     <div class="filtros_pie">
                         <span class="filtros_nota">Los filtros se aplican al elegirlos.</span>
                         <div class="filtros_acciones">
@@ -115,6 +134,233 @@
             </template>
         </section>
 
+        <template lwc:if={esVistaDashboard}>
+            <!-- ===== Vista Dashboard: cifras y gráficas del dashboard "Monitoreo Implementaciones tipo"; cada indicador abre su detalle ===== -->
+            <template lwc:if={errorDashboard}>
+                <div class="aviso" role="alert">{errorDashboard}</div>
+            </template>
+            <template lwc:if={cargandoInicialDash}>
+                <div class="cargando"><lightning-spinner alternative-text="Cargando" size="small"></lightning-spinner></div>
+            </template>
+            <template lwc:if={sinDatosDash}>
+                <div class="aviso aviso_alerta" role="status">No hay implementaciones con oportunidad ganada creadas desde 2025.</div>
+            </template>
+            <template lwc:if={hayDash}>
+                <div class="dash_cabecera">
+                    <div>
+                        <p class="sobretitulo">Vista Dashboard · Monitoreo de implementaciones</p>
+                        <h2 class="titulo_seccion">Dashboard</h2>
+                        <p class="panel_nota dash_nota">Cada indicador usa el periodo y las reglas de su reporte (oportunidades ganadas, cierre en 2026, etapa o fecha acordada). El interruptor Sistema nuevo recorta a lo creado desde el 24 de septiembre.</p>
+                    </div>
+                    <button class="interruptor" role="switch" aria-checked={ariaPruebas} onclick={alternarPruebas}
+                        title="Mostrar u ocultar la cuenta de pruebas (Patito)">
+                        <span class="interruptor_texto">
+                            <span>Cuenta de pruebas</span>
+                            <strong>{textoPruebas}</strong>
+                        </span>
+                        <span class="interruptor_pista" aria-hidden="true"><span class="interruptor_perilla"></span></span>
+                    </button>
+                </div>
+
+                <section class="bloque dash_seccion" aria-labelledby="titulo-dash-estatus">
+                    <div class="bloque_encabezado">
+                        <span class="bloque_letra" aria-hidden="true">1</span>
+                        <span class="bloque_textos">
+                            <h2 class="bloque_titulo" id="titulo-dash-estatus">Estatus de las implementaciones</h2>
+                            <span class="bloque_subtitulo">Indicadores por etapa, gráficas por póliza y fecha acordada, y el detalle de cada implementación</span>
+                        </span>
+                    </div>
+                    <div class="bloque_cuerpo">
+                        <div class="rejilla_kpi dash_kpis" role="group" aria-label="Indicadores de estatus">
+                            <template for:each={dash.estados} for:item="k">
+                                <button key={k.id} class={k.clase} aria-pressed={k.seleccionado} title={k.textoAyuda} data-id={k.id} onclick={seleccionarKpiDash}>
+                                    <span class="kpi_cabecera">
+                                        <span class="kpi_icono"><lightning-icon icon-name={k.icono} size="x-small"></lightning-icon></span>
+                                        <span class="kpi_etiqueta">{k.etiqueta}</span>
+                                    </span>
+                                    <span class="kpi_valor">{k.valor}</span>
+                                    <span class="kpi_nota">{k.nota}</span>
+                                    <span class="kpi_accion">{k.accion}</span>
+                                </button>
+                            </template>
+                        </div>
+                        <template lwc:if={hayDrillEstatus}>
+                            <c-implementaciones-dash-tabla-v2 titulo={dash.drill.titulo} tabla={dash.drill.tabla} cerrable
+                                oncerrar={cerrarKpiDash} onordenar={ordenarDash} onmas={mostrarMasDash}></c-implementaciones-dash-tabla-v2>
+                        </template>
+
+                        <section class="dash_rejilla">
+                            <div class="panel">
+                                <h3 class="panel_titulo">Seguimiento de implementaciones</h3>
+                                <p class="panel_nota">Implementaciones por etapa, separadas por póliza adquirida.</p>
+                                <template lwc:if={dash.seguimiento.hay}>
+                                    <ul class="dash_leyenda">
+                                        <template for:each={dash.seguimiento.leyenda} for:item="l">
+                                            <li key={l.clave}><span class="dash_marca" style={l.estilo}></span>{l.etiqueta}</li>
+                                        </template>
+                                    </ul>
+                                    <ul class="dash_barras">
+                                        <template for:each={dash.seguimiento.filas} for:item="t">
+                                            <li key={t.clave} class="dash_barra_fila">
+                                                <span class="dash_barra_nombre" title={t.etapa}>{t.etapa}</span>
+                                                <span class="dash_barra_pista">
+                                                    <template for:each={t.segmentos} for:item="g">
+                                                        <span key={g.clave} class="dash_seg" style={g.estilo} title={g.titulo}>{g.n}</span>
+                                                    </template>
+                                                </span>
+                                                <span class="dash_barra_total">{t.total}</span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </template>
+                                <template lwc:else><p class="vacio">Sin implementaciones.</p></template>
+                            </div>
+                            <div class="panel">
+                                <h3 class="panel_titulo">Etapas de implementaciones</h3>
+                                <template lwc:if={dash.dona.hay}>
+                                    <div class="dash_dona_caja">
+                                        <div class="dash_dona" style={dash.dona.estilo} role="img" aria-label="Implementaciones por etapa">
+                                            <span class="dash_dona_centro"><strong>{dash.dona.total}</strong><small>implementaciones</small></span>
+                                        </div>
+                                        <ul class="dash_dona_leyenda">
+                                            <template for:each={dash.dona.items} for:item="d">
+                                                <li key={d.etapa}><span class="dash_marca" style={d.estiloMarca}></span><span class="dash_dona_tipo">{d.etapa}</span><span class="dash_dona_n">{d.n} · {d.pct}%</span></li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </template>
+                                <template lwc:else><p class="vacio">Sin implementaciones.</p></template>
+                            </div>
+                        </section>
+
+                        <section class="panel dash_bloque">
+                            <h3 class="panel_titulo">Implementaciones por fecha acordada</h3>
+                            <p class="panel_nota">Desde enero de 2026. Columnas: implementaciones por etapa. Línea: cuentas distintas.</p>
+                            <template lwc:if={dash.meses.hay}>
+                                <ul class="dash_leyenda">
+                                    <template for:each={dash.meses.leyenda} for:item="l">
+                                        <li key={l.clave}><span class="dash_marca" style={l.estilo}></span>{l.etiqueta}</li>
+                                    </template>
+                                    <template lwc:if={dash.meses.hayLinea}>
+                                        <li><span class="dash_marca_linea"></span>Cuentas (máx. {dash.meses.linea.maximo})</li>
+                                    </template>
+                                </ul>
+                                <div class="dash_grafica">
+                                    <div style={dash.meses.ancho}>
+                                        <div class="dash_zona">
+                                            <ul class="dash_pilas">
+                                                <template for:each={dash.meses.columnas} for:item="m">
+                                                    <li key={m.clave} class="dash_pila_col" title={m.titulo}>
+                                                        <span class="dash_columna_pila">
+                                                            <template for:each={m.segmentos} for:item="g">
+                                                                <span key={g.clave} class="dash_col_seg" style={g.estilo} title={g.titulo}></span>
+                                                            </template>
+                                                        </span>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                            <template lwc:if={dash.meses.hayLinea}>
+                                                <svg class="dash_linea" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                                                    <polyline class="dash_linea_trazo" points={dash.meses.linea.puntos}></polyline>
+                                                </svg>
+                                                <template for:each={dash.meses.linea.marcas} for:item="q">
+                                                    <span key={q.clave} class="dash_punto" style={q.estilo}></span>
+                                                </template>
+                                            </template>
+                                        </div>
+                                        <ul class="dash_pie">
+                                            <template for:each={dash.meses.columnas} for:item="m">
+                                                <li key={m.clave} class="dash_pie_col">
+                                                    <span class="dash_columna_total">{m.total}</span>
+                                                    <span class="dash_columna_mes">{m.etiqueta}</span>
+                                                    <span class="dash_columna_part">{m.cuentasTxt} ctas.</span>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </template>
+                            <template lwc:else><p class="vacio">Ninguna implementación tiene fecha acordada en 2026.</p></template>
+                        </section>
+
+                        <template for:each={dash.tablasSeguimiento} for:item="t">
+                            <c-implementaciones-dash-tabla-v2 key={t.clave} titulo={t.titulo} tabla={t.tabla} texto-vacio={t.vacio}
+                                onordenar={ordenarDash} onmas={mostrarMasDash}></c-implementaciones-dash-tabla-v2>
+                        </template>
+                        <c-implementaciones-dash-tabla-v2 titulo="Detalle de implementaciones" tabla={dash.tablaDetalle}
+                            texto-vacio="Sin implementaciones." onordenar={ordenarDash} onmas={mostrarMasDash}></c-implementaciones-dash-tabla-v2>
+                    </div>
+                </section>
+
+                <section class="bloque dash_seccion" aria-labelledby="titulo-dash-horas">
+                    <div class="bloque_encabezado">
+                        <span class="bloque_letra" aria-hidden="true">2</span>
+                        <span class="bloque_textos">
+                            <h2 class="bloque_titulo" id="titulo-dash-horas">Horas y satisfacción</h2>
+                            <span class="bloque_subtitulo">Horas contratadas, consumidas y disponibles; satisfacción del cliente</span>
+                        </span>
+                    </div>
+                    <div class="bloque_cuerpo">
+                        <div class="rejilla_kpi dash_kpis" role="group" aria-label="Indicadores de horas y satisfacción">
+                            <template for:each={dash.horas} for:item="k">
+                                <button key={k.id} class={k.clase} aria-pressed={k.seleccionado} title={k.textoAyuda} data-id={k.id} onclick={seleccionarKpiDash}>
+                                    <span class="kpi_cabecera">
+                                        <span class="kpi_icono"><lightning-icon icon-name={k.icono} size="x-small"></lightning-icon></span>
+                                        <span class="kpi_etiqueta">{k.etiqueta}</span>
+                                    </span>
+                                    <span class="kpi_valor">{k.valor}</span>
+                                    <span class="kpi_nota">{k.nota}</span>
+                                    <span class="kpi_accion">{k.accion}</span>
+                                </button>
+                            </template>
+                        </div>
+                        <template lwc:if={hayDrillHoras}>
+                            <c-implementaciones-dash-tabla-v2 titulo={dash.drill.titulo} tabla={dash.drill.tabla} cerrable
+                                oncerrar={cerrarKpiDash} onordenar={ordenarDash} onmas={mostrarMasDash}></c-implementaciones-dash-tabla-v2>
+                        </template>
+                        <div class="dash_rejilla">
+                            <section class="panel">
+                                <h3 class="panel_titulo">Horas contratadas vs consumidas</h3>
+                                <p class="panel_nota">{dash.horasCuentas.nota}</p>
+                                <template lwc:if={dash.horasCuentas.hay}>
+                                    <ul class="dash_leyenda">
+                                        <li><span class="dash_marca dash_horas_contratadas"></span>Contratadas</li>
+                                        <li><span class="dash_marca dash_horas_consumidas"></span>Consumidas</li>
+                                    </ul>
+                                    <ul class="dash_barras">
+                                        <template for:each={dash.horasCuentas.filas} for:item="c">
+                                            <li key={c.cuenta} class="dash_horas_fila" title={c.titulo}>
+                                                <span class="dash_barra_nombre">{c.cuenta}</span>
+                                                <span class="dash_horas_barras">
+                                                    <span class="dash_horas_barra"><span class="dash_horas_relleno dash_horas_contratadas" style={c.estiloContratadas}></span><span class="dash_horas_valor">{c.contratadas}</span></span>
+                                                    <span class="dash_horas_barra"><span class="dash_horas_relleno dash_horas_consumidas" style={c.estiloConsumidas}></span><span class="dash_horas_valor">{c.consumidas}</span></span>
+                                                </span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </template>
+                                <template lwc:else><p class="vacio">Sin horas registradas.</p></template>
+                            </section>
+                            <section class="panel">
+                                <h3 class="panel_titulo">Satisfacción del cliente</h3>
+                                <p class="panel_nota">Promedio de las implementaciones con satisfacción registrada.</p>
+                                <template lwc:if={dash.satisfaccion.hay}>
+                                    <p class="dash_medidor_valor">{dash.satisfaccion.valor}</p>
+                                    <div class="dash_medidor" role="img" aria-label="Satisfacción del cliente">
+                                        <span class={dash.satisfaccion.clase} style={dash.satisfaccion.ancho}></span>
+                                    </div>
+                                    <div class="dash_medidor_escala"><span>0</span><span>33</span><span>67</span><span>100</span></div>
+                                </template>
+                                <template lwc:else><p class="vacio">Sin satisfacción registrada.</p></template>
+                            </section>
+                        </div>
+                    </div>
+                </section>
+            </template>
+        </template>
+        <template lwc:else>
+
+
         <template lwc:if={error}>
             <div class="aviso" role="alert">{error}</div>
         </template>
@@ -124,7 +370,7 @@
         </template>
 
         <template lwc:if={sinDatos}>
-            <div class="aviso aviso_alerta" role="status">No hay implementaciones ni proyectos con fechas o actividades desde el 1 de octubre de 2026.</div>
+            <div class="aviso aviso_alerta" role="status">No hay implementaciones ni proyectos para mostrar.</div>
         </template>
 
         <template lwc:if={hayDatos}>
@@ -150,7 +396,7 @@
                             <p class="sobretitulo">{sobretituloIndicadores}</p>
                             <h2 class="titulo_seccion">Indicadores</h2>
                         </div>
-                        <span class="panel_nota">Corte desde el 1 de octubre de 2026</span>
+                        <span class="panel_nota" lwc:if={soloSistemaNuevo}>Corte desde el 24 de septiembre de 2026</span>
                     </div>
                     <div class="rejilla_kpi rejilla_kpi_principal" role="group" aria-label="Indicadores">
                         <template for:each={vm.kpis} for:item="k">
@@ -528,7 +774,7 @@
                             <h2 class="bloque_titulo">Actividades</h2>
                             <span class="bloque_subtitulo">Captura, grupos y distribución desde el corte</span>
                         </span>
-                        <span class="bloque_resumen">{vm.actividades.total} generadas desde el 1 de octubre</span>
+                        <span class="bloque_resumen">{vm.actividades.total} generadas desde el 24 de septiembre</span>
                     </summary>
                     <div class="bloque_cuerpo">
                         <div class="rejilla_kpi rejilla_kpi_extra" role="group" aria-label="Actividades por grupo">
@@ -712,7 +958,7 @@
                                 <template lwc:if={vm.tiempos.hayPorEtapa}>
                                     <c-implementaciones-barras-v2 modo="simple" tono1="info" filas={vm.tiempos.porEtapa}></c-implementaciones-barras-v2>
                                 </template>
-                                <template lwc:else><p class="vacio">Sin cambios de etapa registrados desde el 1 de octubre.</p></template>
+                                <template lwc:else><p class="vacio">Sin cambios de etapa registrados desde el 24 de septiembre.</p></template>
                             </div>
                         </div>
                         <div class="dos_columnas">
@@ -722,7 +968,7 @@
                                 <template lwc:if={vm.tiempos.hayPorHito}>
                                     <c-implementaciones-barras-v2 modo="simple" tono1="alerta" filas={vm.tiempos.porHito} etiqueta-ancha></c-implementaciones-barras-v2>
                                 </template>
-                                <template lwc:else><p class="vacio">Sin controles de cambio desde el 1 de octubre.</p></template>
+                                <template lwc:else><p class="vacio">Sin controles de cambio desde el 24 de septiembre.</p></template>
                                 <template lwc:if={vm.tiempos.hayConMas}>
                                     <h3 class="panel_titulo panel_titulo_aparte">Registros con más cambios</h3>
                                     <c-implementaciones-barras-v2 modo="simple" tono1="alerta" filas={vm.tiempos.conMas} etiqueta-ancha></c-implementaciones-barras-v2>
@@ -750,6 +996,7 @@
                 </details>
 
             </template>
+        </template>
         </template>
     </div>
 </template>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Panel_Implementaciones_Lider</name>
+    </customPermissions>
+    <description>Muestra el interruptor Panel / Dashboard en el panel de implementaciones v2. Se asigna junto con Panel_Implementaciones_V2, que da acceso a las clases y campos.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Panel de implementaciones (líder)</label>
+</PermissionSet>

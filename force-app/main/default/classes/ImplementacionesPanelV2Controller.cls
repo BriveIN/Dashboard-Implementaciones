@@ -10,7 +10,7 @@
  */
 public with sharing class ImplementacionesPanelV2Controller {
 
-    @TestVisible public static final Date FECHA_INICIO_DATOS = Date.newInstance(2026, 10, 1);
+    @TestVisible public static final Date FECHA_INICIO_DATOS = Date.newInstance(2026, 9, 24);
     @TestVisible public static final String CUENTA_PRUEBA = '%patito%';
     @TestVisible static final Set<String> TIPOS = new Set<String>{ 'Implementación', 'Proyecto' };
 
@@ -171,6 +171,99 @@ public with sharing class ImplementacionesPanelV2Controller {
         }
     }
 
+    // ---------- vista Dashboard ----------
+
+    // Los reportes del dashboard "Monitoreo Implementaciones tipo" parten de las Implementaciones creadas desde esta fecha
+    @TestVisible public static final Date DASHBOARD_CREADAS_DESDE = Date.newInstance(2025, 1, 1);
+
+    // solo las pruebas lo apagan: crear una oportunidad ganada exige campos que cambian con las validaciones de la org
+    @TestVisible static Boolean soloOportunidadesGanadas = false;
+
+    /** Una implementación con lo que piden los reportes del dashboard. Etapa = valor real del picklist (incluye Back log y Entrega del Proyecto). */
+    public class FilaDashboard {
+        @AuraEnabled public Id id;
+        @AuraEnabled public String nombre;
+        @AuraEnabled public Id cuentaId;
+        @AuraEnabled public String empresa;
+        @AuraEnabled public String oportunidad;
+        @AuraEnabled public Date cierre;               // cierre de la oportunidad: lo usan los reportes del año fiscal
+        @AuraEnabled public String centro;             // Usuario__c (propietario del programa)
+        @AuraEnabled public String responsable;
+        @AuraEnabled public List<String> asociados = new List<String>();
+        @AuraEnabled public String solucion;
+        @AuraEnabled public String poliza;
+        @AuraEnabled public String etapa;
+        @AuraEnabled public Datetime creadoEn;
+        @AuraEnabled public Date fechaAcordada;
+        @AuraEnabled public String vencimiento;
+        @AuraEnabled public Decimal reprogramaciones;
+        @AuraEnabled public Boolean cancelada;
+        @AuraEnabled public Decimal horasContratadas;
+        @AuraEnabled public Decimal horasConsumidas;
+        @AuraEnabled public Decimal horasDisponibles;
+        @AuraEnabled public Decimal satisfaccion;
+    }
+
+    /**
+     * Implementaciones (no Proyectos) creadas desde 2025 y con oportunidad ganada: los reportes del dashboard traen el filtro
+     * estándar "oportunidades cerradas ganadas" del tipo de reporte, aunque no se vea en sus filtros. No aplica el corte del
+     * panel ni excluye etapas heredadas: cada indicador filtra por su cuenta (cierre del año, etapa, fecha acordada, satisfacción).
+     * soloSistemaNuevo: solo lo creado desde FECHA_INICIO_DATOS (arranque del sistema nuevo).
+     */
+    @AuraEnabled
+    public static List<FilaDashboard> obtenerDashboard(Boolean incluirPruebas, Boolean soloSistemaNuevo) {
+        try {
+            Map<String, Object> binds = new Map<String, Object>{
+                'sistemaNuevo' => Datetime.newInstance(FECHA_INICIO_DATOS, Time.newInstance(0, 0, 0, 0))
+            };
+            String consulta = 'SELECT Id, Name, Cuenta_Comercial__c, Cuenta_Comercial__r.Name, Nombre_Comercial_de_la_Cuenta__c,'
+                + ' Oportunidad__r.Name, Oportunidad__r.CloseDate, Usuario__r.Name, toLabel(Responsable_de_la_Implementaci_n__c),'
+                + ' toLabel(Consultor_Asociado__c), toLabel(Soluci_n_adquirida__c), Poliza_Adquirida__c, Etapa_del_Proyecto__c,'
+                + ' CreatedDate, Fecha_acordada__c, Vencimiento_de_Implementaci_n__c, Num_de_Reprogramaciones__c,'
+                + ' Implementaci_n_Cancelada__c, Horas_Contratadas__c, Horas__c, Horas_Disponibles__c, Satisfacion_del_Cliente__c'
+                + ' FROM Delivery_y_Desarrollo__c'
+                + ' WHERE Tipo_de_Ejecucion__c = \'Implementación\' AND Oportunidad__c != null'
+                + (soloOportunidadesGanadas ? ' AND Oportunidad__r.IsWon = true' : '')
+                + (soloSistemaNuevo == true ? ' AND CreatedDate >= :sistemaNuevo' : '')
+                + filtroPruebas(incluirPruebas == true, binds)
+                + ' ORDER BY CreatedDate DESC';
+            List<FilaDashboard> salida = new List<FilaDashboard>();
+            for (Delivery_y_Desarrollo__c r : (List<Delivery_y_Desarrollo__c>) Database.queryWithBinds(consulta, binds, AccessLevel.USER_MODE)) {
+                salida.add(armarFilaDashboard(r));
+            }
+            return salida;
+        } catch (Exception e) {
+            throw new AuraHandledException('No se pudo cargar el dashboard: ' + e.getMessage());
+        }
+    }
+
+    static FilaDashboard armarFilaDashboard(Delivery_y_Desarrollo__c r) {
+        FilaDashboard f = new FilaDashboard();
+        f.id = r.Id;
+        f.nombre = r.Name;
+        f.cuentaId = r.Cuenta_Comercial__c;
+        f.empresa = r.Nombre_Comercial_de_la_Cuenta__c != null ? r.Nombre_Comercial_de_la_Cuenta__c
+            : (r.Cuenta_Comercial__r != null ? r.Cuenta_Comercial__r.Name : null);
+        f.oportunidad = r.Oportunidad__r != null ? r.Oportunidad__r.Name : null;
+        f.cierre = r.Oportunidad__r != null ? r.Oportunidad__r.CloseDate : null;
+        f.centro = r.Usuario__r != null ? r.Usuario__r.Name : null;
+        f.responsable = (String) r.get('Responsable_de_la_Implementaci_n__c');
+        f.asociados = partir((String) r.get('Consultor_Asociado__c'));
+        f.solucion = (String) r.get('Soluci_n_adquirida__c');
+        f.poliza = r.Poliza_Adquirida__c;
+        f.etapa = r.Etapa_del_Proyecto__c;
+        f.creadoEn = r.CreatedDate;
+        f.fechaAcordada = r.Fecha_acordada__c;
+        f.vencimiento = r.Vencimiento_de_Implementaci_n__c;
+        f.reprogramaciones = r.Num_de_Reprogramaciones__c;
+        f.cancelada = r.Implementaci_n_Cancelada__c == true;
+        f.horasContratadas = r.Horas_Contratadas__c;
+        f.horasConsumidas = r.Horas__c;
+        f.horasDisponibles = r.Horas_Disponibles__c;
+        f.satisfaccion = r.Satisfacion_del_Cliente__c;
+        return f;
+    }
+
     // ---------- consulta ----------
 
     // actividades fechadas desde el corte, por registro
@@ -179,7 +272,7 @@ public with sharing class ImplementacionesPanelV2Controller {
         for (Task t : [
             SELECT Id, WhatId, Subject, Status, ActivityDate, Description, Link_a_video_de_sesion__c
             FROM Task
-            WHERE What.Type = 'Delivery_y_Desarrollo__c' AND ActivityDate >= :FECHA_INICIO_DATOS
+            WHERE What.Type = 'Delivery_y_Desarrollo__c'
             WITH USER_MODE
             ORDER BY ActivityDate ASC, CreatedDate ASC
         ]) {
@@ -213,16 +306,11 @@ public with sharing class ImplementacionesPanelV2Controller {
     static List<Delivery_y_Desarrollo__c> consultarRegistros(Set<Id> conActividad, Boolean incluirPruebas) {
         Map<String, Object> binds = new Map<String, Object>{
             'tipos' => TIPOS,
-            'etapas' => ETAPAS.keySet(),
-            'inicio' => FECHA_INICIO_DATOS,
-            'creadoDesde' => Datetime.newInstance(FECHA_INICIO_DATOS, Time.newInstance(0, 0, 0, 0)),
-            'conActividad' => conActividad
+            'etapas' => ETAPAS.keySet()
         };
         String consulta = 'SELECT ' + String.join(camposConsulta(), ', ') + ' FROM Delivery_y_Desarrollo__c'
             + ' WHERE Tipo_de_Ejecucion__c IN :tipos AND Etapa_del_Proyecto__c IN :etapas'
             + filtroPruebas(incluirPruebas, binds)
-            + ' AND (CreatedDate >= :creadoDesde OR Fecha_de_Estatus__c >= :creadoDesde OR Fecha_acordada__c >= :inicio'
-            + ' OR Fecha_inicio_Kick_Off__c >= :inicio OR Id IN :conActividad)'
             + ' ORDER BY CreatedDate DESC';
         return (List<Delivery_y_Desarrollo__c>) Database.queryWithBinds(consulta, binds, AccessLevel.USER_MODE);
     }
@@ -406,7 +494,6 @@ public with sharing class ImplementacionesPanelV2Controller {
         Matcher m = CAMBIO.matcher(linea);
         if (!m.matches()) return null;
         Date registrado = Date.valueOf(m.group(3));
-        if (registrado < FECHA_INICIO_DATOS) return null;
         Cambio c = new Cambio();
         c.anterior = m.group(1);
         c.nuevo = m.group(2);
@@ -428,7 +515,7 @@ public with sharing class ImplementacionesPanelV2Controller {
             t.veces = 0;
             for (String linea : lineasDesde((String) r.get(campo))) {
                 Matcher m = PASO_ETAPA.matcher(linea);
-                if (!m.matches() || Date.valueOf(m.group(1)) < FECHA_INICIO_DATOS) continue;
+                if (!m.matches()) continue;
                 t.horas += Decimal.valueOf(m.group(2));
                 t.veces++;
             }
@@ -445,7 +532,7 @@ public with sharing class ImplementacionesPanelV2Controller {
             Matcher m = FECHA.matcher(l);
             String ultima = null;
             while (m.find()) ultima = m.group(1);
-            if (ultima != null && Date.valueOf(ultima) >= FECHA_INICIO_DATOS) salida.add(l);
+            if (ultima != null) salida.add(l);
         }
         return salida;
     }

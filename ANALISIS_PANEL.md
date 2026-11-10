@@ -24,7 +24,7 @@ El recorrido que sigue es: **indicador → registro → etapa → sección → a
   - Los flows que llenan esos datos: `Horas_Contratadas_desde_Productos`, `Horas_Consumidas_Delivery` y `Delivery_y_Desarrollo_Generar_Actividades`.
 
 ### Reglas que filtran lo que entra
-1. **Corte:** 1 de octubre de 2026, aplicado en Apex. Entra un registro si tiene alguna fecha de trabajo o actividad desde ese día. Las fechas consideradas son creación, último cambio de etapa, Kickoff acordado, Kickoff real o una Task fechada desde el corte. De cada registro solo se devuelven actividades, cambios y tiempos desde ese día.
+1. **Corte:** 24 de septiembre de 2026, aplicado en Apex. Entra un registro si tiene alguna fecha de trabajo o actividad desde ese día. Las fechas consideradas son creación, último cambio de etapa, Kickoff acordado, Kickoff real o una Task fechada desde el corte. De cada registro solo se devuelven actividades, cambios y tiempos desde ese día.
 2. **Tipo:** `Tipo_de_Ejecucion__c` debe ser `Implementación` o `Proyecto`. Los 136 registros sin tipo no entran.
 3. **Etapa:** solo 7 valores vigentes de `Etapa_del_Proyecto__c`. "Recepción de Insumos" se muestra como "En proceso". Los valores heredados (Back log, Entrega del Proyecto, Cancelada/o, No aplica, En Proceso) no entran.
 4. **Cuenta de pruebas:** se excluyen las cuentas con "patito" en el nombre, salvo que se active el interruptor.
@@ -33,7 +33,7 @@ El recorrido que sigue es: **indicador → registro → etapa → sección → a
 ## 3. Estructura de la pantalla, de arriba abajo
 
 ### 3.1 Encabezado
-- Logo, título "Implementaciones y proyectos" y "Actualizado a las HH:MM · registros desde el 1 de octubre de 2026".
+- Logo, título "Implementaciones y proyectos" y "Actualizado a las HH:MM · registros desde el 24 de septiembre de 2026".
 - Botón **Exportar CSV**, que exporta los registros filtrados en 16 columnas.
 - Botón de **actualizar**, que vuelve a llamar a Apex.
 
