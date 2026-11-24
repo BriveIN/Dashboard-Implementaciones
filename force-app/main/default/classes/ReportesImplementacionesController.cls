@@ -4,10 +4,11 @@
  *   getReporteImplementaciones  -> Reporte 1: Tipo de Ejecución = Implementación; hoja "Por fecha creación"
  *   getReporteProyectos         -> Reporte 2: Tipo de Ejecución = Proyecto; hoja "Fecha de creación"
  *
- * El rango de fechas se aplica SIEMPRE a CreatedDate, inclusivo y en hora de Ciudad de México. Las columnas salen en el
+ * El rango de fechas se aplica SIEMPRE a la fecha de finalización (Fecha_Fin_de_Implementaci_n__c, un campo de fecha, inclusivo);
+ * lo que no tiene fecha de finalización no sale en el reporte. Las columnas salen en el
  * orden y con el texto de la especificación; fórmulas y horas se exportan tal como las guarda Salesforce (no se recalcula).
  * Una consulta por reporte (sin SOQL en ciclos): para soportar miles de filas sin pasar el límite de memoria y de respuesta,
- * la consulta se pagina por llave (CreatedDate, Id) y el componente pide la siguiente página con el cursor que recibe.
+ * la consulta se pagina por llave (fecha de finalización, Id) y el componente pide la siguiente página con el cursor que recibe.
  *
  * with sharing + WITH USER_MODE: cada usuario exporta solo lo que ya tiene permitido ver.
  */
@@ -33,7 +34,7 @@ public with sharing class ReportesImplementacionesController {
         @AuraEnabled public String solucion;        // etiqueta tal como la muestra el panel
         @AuraEnabled public Boolean incluirPruebas;
         @AuraEnabled public List<String> ids;       // filtros que solo el panel conoce (producto, actividades, cambios, horas, área)
-        @AuraEnabled public String cursorFecha;     // página siguiente: último CreatedDate (GMT) y Id de la página anterior
+        @AuraEnabled public String cursorFecha;     // página siguiente: última fecha de finalización ('aaaa-mm-dd') y Id de la página anterior
         @AuraEnabled public String cursorId;
     }
     public class Columna {
@@ -155,7 +156,7 @@ public with sharing class ReportesImplementacionesController {
             salida.registros = registros.size();
             if (salida.hayMas) {
                 Delivery_y_Desarrollo__c ultimo = registros[registros.size() - 1];
-                salida.cursorFecha = ultimo.CreatedDate.formatGmt('yyyy-MM-dd HH:mm:ss');
+                salida.cursorFecha = String.valueOf(ultimo.Fecha_Fin_de_Implementaci_n__c);
                 salida.cursorId = ultimo.Id;
             }
             for (DefHoja d : hojas) salida.hojas.add(armarHoja(d, registros));
@@ -203,8 +204,8 @@ public with sharing class ReportesImplementacionesController {
 
     // una sola consulta con los campos de todas las hojas del reporte
     static List<Delivery_y_Desarrollo__c> consultar(Filtros f, String tipo, Date desde, Date hasta, List<DefHoja> hojas) {
-        Set<String> campos = new Set<String>{ 'Id', 'CreatedDate' };
-        Set<String> yaPedidos = new Set<String>{ 'Id', 'CreatedDate' };
+        Set<String> campos = new Set<String>{ 'Id', 'CreatedDate', 'Fecha_Fin_de_Implementaci_n__c' };
+        Set<String> yaPedidos = new Set<String>{ 'Id', 'CreatedDate', 'Fecha_Fin_de_Implementaci_n__c' };
         for (DefHoja d : hojas) {
             for (Col col : d.columnas) {
                 if (!yaPedidos.add(col.api)) continue;
@@ -214,19 +215,19 @@ public with sharing class ReportesImplementacionesController {
 
         Map<String, Object> binds = new Map<String, Object>{
             'tipo' => tipo,
-            'desdeDt' => inicioDelDia(desde),
-            'hastaDt' => inicioDelDia(hasta.addDays(1)),    // exclusivo: el último día entra completo
+            'desde' => desde,
+            'hasta' => hasta,                               // campo de fecha: el último día entra completo
             'limite' => tamanoPagina + 1
         };
-        String donde = ' WHERE Tipo_de_Ejecucion__c = :tipo AND CreatedDate >= :desdeDt AND CreatedDate < :hastaDt';
+        String donde = ' WHERE Tipo_de_Ejecucion__c = :tipo AND Fecha_Fin_de_Implementaci_n__c >= :desde AND Fecha_Fin_de_Implementaci_n__c <= :hasta';
         donde += filtrosDelPanel(f, binds);
         if (String.isNotBlank(f.cursorFecha) && String.isNotBlank(f.cursorId)) {
-            binds.put('cursorFecha', Datetime.valueOfGmt(f.cursorFecha));
+            binds.put('cursorFecha', Date.valueOf(f.cursorFecha));
             binds.put('cursorId', (Id) f.cursorId);
-            donde += ' AND (CreatedDate > :cursorFecha OR (CreatedDate = :cursorFecha AND Id > :cursorId))';
+            donde += ' AND (Fecha_Fin_de_Implementaci_n__c > :cursorFecha OR (Fecha_Fin_de_Implementaci_n__c = :cursorFecha AND Id > :cursorId))';
         }
         String consulta = 'SELECT ' + String.join(new List<String>(campos), ', ') + ' FROM Delivery_y_Desarrollo__c' + donde
-            + ' ORDER BY CreatedDate ASC, Id ASC LIMIT :limite';
+            + ' ORDER BY Fecha_Fin_de_Implementaci_n__c ASC, Id ASC LIMIT :limite';
         // AccessLevel.USER_MODE equivale a WITH USER_MODE (no se pueden poner los dos en una consulta dinámica)
         return (List<Delivery_y_Desarrollo__c>) Database.queryWithBinds(consulta, binds, AccessLevel.USER_MODE);
     }
@@ -287,7 +288,7 @@ public with sharing class ReportesImplementacionesController {
 
     /**
      * Rango [desde, hasta] del reporte. El mes del panel se vuelve rango; sin fechas, desde el corte del panel hasta hoy.
-     * Siempre se aplica a la fecha de creación: el selector "campo de fecha" del panel no cambia el reporte.
+     * Siempre se aplica a la fecha de finalización: el selector "campo de fecha" del panel no cambia el reporte.
      */
     @TestVisible static Date[] rango(Filtros f) {
         Date desde = leerFecha(f.desde);

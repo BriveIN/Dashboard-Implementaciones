@@ -20,11 +20,13 @@ private class ReportesImplementacionesControllerTest {
     }
 
     /*
-     * A  Implementación 10-jul-2026, con acta enviada, responsable, asociados y satisfacción
-     * B  Implementación 30-sep-2026 23:30 hora de México (ya es 1-oct en GMT): entra al Q3
-     * C  Implementación 1-oct-2026 00:30 hora de México: queda fuera del Q3
-     * D  Proyecto 15-ago-2026
-     * E  Implementación de la cuenta de pruebas 1-ago-2026
+     * El reporte filtra por fecha de finalización (Fecha_Fin_de_Implementaci_n__c); la creación solo identifica el registro.
+     * A  Implementación 10-jul-2026 (termina 12-jul), con acta enviada, responsable, asociados y satisfacción
+     * B  Implementación creada 1-oct-2026 GMT, termina 30-sep: entra al Q3 (un registro creado antes o después del rango sí sale si termina dentro)
+     * C  Implementación termina 1-oct-2026: queda fuera del Q3
+     * D  Proyecto 15-ago-2026 (termina 20-ago)
+     * E  Implementación de la cuenta de pruebas 1-ago-2026 (termina 5-ago)
+     * F  Implementación sin fecha de finalización: no sale en el reporte
      */
     @TestSetup
     static void preparar() {
@@ -40,7 +42,6 @@ private class ReportesImplementacionesControllerTest {
         a.Fecha_Envio_Acta_Entrega__c = Date.newInstance(2026, 9, 1);
         a.Fecha_Acordada_Final_Config__c = Date.newInstance(2026, 9, 15);
         a.Acta_de_Entrega_Firmada_Cliente__c = true;
-        a.Satisfacion_del_Cliente__c = 9;
         a.Total_Participantes__c = 12;
         a.Responsable_de_la_Implementaci_n__c = primerValor(Delivery_y_Desarrollo__c.Responsable_de_la_Implementaci_n__c.getDescribe(), 0);
         String primero = primerValor(Delivery_y_Desarrollo__c.Consultor_Asociado__c.getDescribe(), 0);
@@ -52,13 +53,20 @@ private class ReportesImplementacionesControllerTest {
         Delivery_y_Desarrollo__c c = registro('Implementación', cuenta.Id, oportunidad.Id);
         Delivery_y_Desarrollo__c d = registro('Proyecto', cuenta.Id, oportunidad.Id);
         Delivery_y_Desarrollo__c e = registro('Implementación', patito.Id, oportunidad.Id);
-        insert new List<Delivery_y_Desarrollo__c>{ a, b, c, d, e };
+        Delivery_y_Desarrollo__c f = registro('Implementación', cuenta.Id, oportunidad.Id);
+        a.Fecha_Fin_de_Implementaci_n__c = Date.newInstance(2026, 7, 12);
+        b.Fecha_Fin_de_Implementaci_n__c = Date.newInstance(2026, 9, 30);
+        c.Fecha_Fin_de_Implementaci_n__c = Date.newInstance(2026, 10, 1);
+        d.Fecha_Fin_de_Implementaci_n__c = Date.newInstance(2026, 8, 20);
+        e.Fecha_Fin_de_Implementaci_n__c = Date.newInstance(2026, 8, 5);
+        insert new List<Delivery_y_Desarrollo__c>{ a, b, c, d, e, f };
 
         Test.setCreatedDate(a.Id, Datetime.newInstanceGmt(2026, 7, 10, 18, 0, 0));
         Test.setCreatedDate(b.Id, Datetime.newInstanceGmt(2026, 10, 1, 5, 30, 0));
         Test.setCreatedDate(c.Id, Datetime.newInstanceGmt(2026, 10, 1, 6, 30, 0));
         Test.setCreatedDate(d.Id, Datetime.newInstanceGmt(2026, 8, 15, 18, 0, 0));
         Test.setCreatedDate(e.Id, Datetime.newInstanceGmt(2026, 8, 1, 18, 0, 0));
+        Test.setCreatedDate(f.Id, Datetime.newInstanceGmt(2026, 8, 2, 18, 0, 0));
     }
 
     // los flows de la org renombran los registros: se identifican por cuenta, tipo y fecha de creación
@@ -119,18 +127,23 @@ private class ReportesImplementacionesControllerTest {
     }
 
     @IsTest
-    static void implementaciones_respeta_el_rango_en_hora_de_mexico_y_el_orden() {
+    static void implementaciones_respeta_el_rango_de_fecha_de_finalizacion_y_el_orden() {
         ReportesImplementacionesController.Reporte r = ReportesImplementacionesController.getReporteImplementaciones(q3());
         String a = id15(CUENTA, 'Implementación', Datetime.newInstanceGmt(2026, 7, 10, 18, 0, 0));
         String b = id15(CUENTA, 'Implementación', Datetime.newInstanceGmt(2026, 10, 1, 5, 30, 0));
-        System.assertEquals(new List<String>{ a, b }, ids(r.hojas[0]), 'A y B (30-sep 23:30 en México), por fecha de creación ascendente; sin C, proyecto ni pruebas');
+        System.assertEquals(new List<String>{ a, b }, ids(r.hojas[0]), 'A y B, por fecha de finalización ascendente; sin C (termina 1-oct), F (sin fecha de fin), proyecto ni pruebas');
         System.assertEquals(2, r.registros);
         System.assertEquals(false, r.hayMas);
         System.assertEquals(15, a.length());
 
         Integer creacion = columna(r.hojas[0], 'Implementación: Fecha de creación');
         System.assertEquals('2026-07-10', r.hojas[0].filas[0][creacion]);
-        System.assertEquals('2026-09-30', r.hojas[0].filas[1][creacion], 'la fecha se muestra en hora de México, no en GMT');
+        System.assertEquals('2026-09-30', r.hojas[0].filas[1][creacion], 'la fecha de creación se muestra en hora de México, no en GMT');
+        // el rango no mira la creación: A (creada en julio) sale en un rango que solo contiene su fecha de fin
+        ReportesImplementacionesController.Filtros solo = new ReportesImplementacionesController.Filtros();
+        solo.desde = '2026-07-12';
+        solo.hasta = '2026-07-12';
+        System.assertEquals(new List<String>{ a }, ids(ReportesImplementacionesController.getReporteImplementaciones(solo).hojas[0]));
     }
 
     @IsTest
@@ -139,7 +152,7 @@ private class ReportesImplementacionesControllerTest {
         List<Object> fila = h.filas[0];
         System.assertEquals('Sí', fila[columna(h, 'Acta de entrega firmada cliente')]);
         System.assertEquals('No', h.filas[1][columna(h, 'Acta de entrega firmada cliente')]);
-        System.assertEquals(9, fila[columna(h, 'Satisfacion del Cliente')]);
+        System.assertEquals('', fila[columna(h, 'Satisfacion del Cliente')], 'la satisfacción la calcula el sistema con las encuestas: sin encuestas sale vacía');
         System.assertEquals('2026-09-15', fila[columna(h, 'Fecha estimada fin implementación/proyecto')]);
         System.assertEquals('', fila[columna(h, 'Fecha Recibo VoBo Cliente')], 'una fecha vacía sale como texto vacío, no null');
         for (List<Object> f : h.filas) {
@@ -219,7 +232,7 @@ private class ReportesImplementacionesControllerTest {
     }
 
     @IsTest
-    static void el_mes_del_panel_se_vuelve_rango_de_creacion() {
+    static void el_mes_del_panel_se_vuelve_rango_de_finalizacion() {
         ReportesImplementacionesController.Filtros f = new ReportesImplementacionesController.Filtros();
         f.mes = '2026-07';
         ReportesImplementacionesController.Reporte r = ReportesImplementacionesController.getReporteImplementaciones(f);
